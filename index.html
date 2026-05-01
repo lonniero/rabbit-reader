@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=240, height=282, initial-scale=1.0, user-scalable=no">
+  <title>Rabbit Reader</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Hidden file input -->
+  <input type="file" id="file-input" accept=".pdf,.epub" style="display:none">
+
+  <!-- ═══ MENU ═══ -->
+  <div id="menu-screen" class="screen active">
+    <div class="logo">Rabbit Reader</div>
+    <div class="logo-sub">RSVP Speed Reading</div>
+    <div class="menu-btn" data-action="paste">✎ Paste Text</div>
+    <div class="menu-btn" data-action="upload">📄 Upload PDF / EPUB</div>
+    <div class="menu-btn" data-action="library">📚 Library</div>
+    <div class="menu-hint">scroll wheel adjusts speed</div>
+  </div>
+
+  <!-- ═══ LOADING OVERLAY ═══ -->
+  <div id="loading-overlay" class="overlay">
+    <div class="loader-ring"></div>
+    <div class="loader-text" id="loader-text">Processing...</div>
+  </div>
+
+  <!-- ═══ INPUT ═══ -->
+  <div id="input-screen" class="screen">
+    <div class="screen-header">Paste Your Text</div>
+    <textarea id="text-input" placeholder="Paste or type text here..."></textarea>
+    <div class="input-actions">
+      <button data-action="back-menu">← Back</button>
+      <button class="primary" data-action="load-input">Read →</button>
+    </div>
+  </div>
+
+  <!-- ═══ READER ═══ -->
+  <div id="reader-screen" class="screen">
+    <div class="reader-top">
+      <span class="wpm-display" id="wpm-label">300 WPM</span>
+      <span class="progress-text" id="word-count">0 / 0</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="word-zone" id="word-zone">
+      <div class="orp-guide"></div>
+      <div id="current-word">Ready</div>
+    </div>
+    <div class="state-indicator" id="state-label">TAP TO START</div>
+    <div class="reader-bottom">
+      <div class="ctrl-btn" data-action="step-back">◁</div>
+      <div class="ctrl-btn" data-action="restart">↺</div>
+      <div class="play-btn" id="btn-play" data-action="toggle-play">▶</div>
+      <div class="ctrl-btn" data-action="step-fwd">▷</div>
+      <div class="ctrl-btn" data-action="exit-reader">✕</div>
+    </div>
+  </div>
+
+  <!-- ═══ LIBRARY ═══ -->
+  <div id="library-screen" class="screen">
+    <div class="screen-header">Library</div>
+    <div class="lib-list" id="lib-list"></div>
+    <div class="lib-back" data-action="back-menu">← Back to Menu</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
