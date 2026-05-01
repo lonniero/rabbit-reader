@@ -374,18 +374,56 @@ window.addEventListener('wheel', (e) => {
 // ══════════════════════════════════════
 //  EVENT DELEGATION
 // ══════════════════════════════════════
+// ── URL Import ──
+async function loadFromURL() {
+  const url = $('#url-input').value.trim();
+  if (!url) return;
+
+  const ext = url.split('?')[0].split('.').pop().toLowerCase();
+  if (ext !== 'pdf' && ext !== 'epub') {
+    alert('URL must end in .pdf or .epub');
+    return;
+  }
+
+  showLoader('Downloading ' + ext.toUpperCase() + '...');
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const arrayBuffer = await resp.arrayBuffer();
+    const title = url.split('/').pop().split('?')[0].replace(/\.[^.]+$/, '') || 'Imported Book';
+    let text = null;
+
+    if (ext === 'pdf') text = await parsePDF(arrayBuffer);
+    else text = await parseEPUB(arrayBuffer);
+
+    if (text && text.length > 0) {
+      const bookId = addBook(title, text);
+      hideLoader();
+      loadBook(bookId);
+    } else {
+      hideLoader();
+      alert('Could not extract text from this file.');
+    }
+  } catch (err) {
+    hideLoader();
+    console.error('URL import error:', err);
+    alert('Failed to download file. Make sure the URL is a direct link to a .pdf or .epub file.');
+  }
+}
+
 document.addEventListener('click', (e) => {
   const action = e.target.closest('[data-action]')?.dataset.action;
   if (!action) return;
   switch (action) {
     case 'paste':       showScreen('input-screen'); break;
-    case 'upload':      elFileInput.click(); break;
+    case 'url-import':  showScreen('url-screen'); break;
     case 'library':     showScreen('library-screen'); break;
     case 'back-menu':   stopReading(); showScreen('menu-screen'); break;
     case 'load-input':
       const txt = $('#text-input').value;
       if (txt.trim()) loadText(txt);
       break;
+    case 'load-url':    loadFromURL(); break;
     case 'toggle-play': togglePlay(); break;
     case 'step-back':   stepBack(); break;
     case 'step-fwd':    stepForward(); break;

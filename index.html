@@ -10,14 +10,16 @@
 </head>
 <body>
   <!-- Hidden file input -->
-  <input type="file" id="file-input" accept=".pdf,.epub" style="display:none">
+  <!-- File input wrapped in label for WebView compatibility -->
+  <input type="file" id="file-input" accept=".pdf,.epub" style="position:absolute;top:-9999px;left:-9999px;opacity:0;">
 
   <!-- ═══ MENU ═══ -->
   <div id="menu-screen" class="screen active">
     <div class="logo">Rabbit Reader</div>
     <div class="logo-sub">RSVP Speed Reading</div>
     <div class="menu-btn" data-action="paste">✎ Paste Text</div>
-    <div class="menu-btn" data-action="upload">📄 Upload PDF / EPUB</div>
+    <label for="file-input" class="menu-btn" id="upload-label">📄 Upload File</label>
+    <div class="menu-btn" data-action="url-import">🔗 Import from URL</div>
     <div class="menu-btn" data-action="library">📚 Library</div>
     <div class="menu-hint">scroll wheel adjusts speed</div>
   </div>
@@ -64,6 +66,18 @@
     <div class="screen-header">Library</div>
     <div class="lib-list" id="lib-list"></div>
     <div class="lib-back" data-action="back-menu">← Back to Menu</div>
+  </div>
+
+  <!-- ═══ URL IMPORT ═══ -->
+  <div id="url-screen" class="screen">
+    <div class="screen-header">Import from URL</div>
+    <div style="padding:8px 10px;font-size:8px;color:#666;text-align:center;">Paste a direct link to a PDF or EPUB file</div>
+    <input type="text" id="url-input" placeholder="https://example.com/book.pdf" style="margin:0 10px;padding:8px;border:1px solid #222;border-radius:6px;background:#141414;color:#f0f0f0;font-size:10px;outline:none;font-family:inherit;width:calc(100% - 20px);">
+    <div style="flex:1;"></div>
+    <div class="input-actions" style="padding:0 10px 10px;">
+      <button data-action="back-menu">← Back</button>
+      <button class="primary" data-action="load-url">Import →</button>
+    </div>
   </div>
 
   <script src="app.js"></script>
