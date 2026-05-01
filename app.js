@@ -316,7 +316,8 @@ function buildLibrary() {
   list.innerHTML = '';
 
   const userBooks = getBooks();
-  const allBooks = [...userBooks, ...SAMPLES];
+  const bundled = (typeof BUNDLED_BOOKS !== 'undefined') ? BUNDLED_BOOKS : [];
+  const allBooks = [...userBooks, ...bundled, ...SAMPLES];
 
   if (allBooks.length === 0) {
     list.innerHTML = '<div style="text-align:center;font-size:8px;color:#444;padding:20px;">No books yet.<br>Upload a PDF or EPUB!</div>';
@@ -327,25 +328,28 @@ function buildLibrary() {
     const wc = book.wordCount || book.text.trim().split(/\s+/).length;
     const mins = Math.ceil(wc / wpm);
     const isSample = book.isSample || book.id.startsWith('_sample');
-    const resumed = (!isSample && book.lastPosition > 0) ? ' · ▸ resumed' : '';
+    const isBundled = book.isBundled || book.id.startsWith('_bundled');
+    const isSystem = isSample || isBundled;
+    const resumed = (!isSystem && book.lastPosition > 0) ? ' · ▸ resumed' : '';
+    const icon = isBundled ? '📕' : isSample ? '📝' : '📄';
 
     const el = document.createElement('div');
     el.className = 'lib-item';
     el.innerHTML = `
       <div class="lib-item-info">
-        <div class="lib-item-title">${isSample ? '📝 ' : '📄 '}${book.title}</div>
-        <div class="lib-item-meta">${wc} words · ~${mins} min${resumed}</div>
+        <div class="lib-item-title">${icon} ${book.title}</div>
+        <div class="lib-item-meta">${wc.toLocaleString()} words · ~${mins} min${resumed}</div>
       </div>
-      ${!isSample ? '<div class="lib-item-del" data-del="' + book.id + '">✕</div>' : ''}
+      ${!isSystem ? '<div class="lib-item-del" data-del="' + book.id + '">✕</div>' : ''}
     `;
     // Open book
     el.querySelector('.lib-item-info').addEventListener('click', () => {
-      if (isSample) loadText(book.text, book.id);
+      if (isSystem) loadText(book.text, book.id);
       else loadBook(book.id);
     });
     el.querySelector('.lib-item-info').addEventListener('touchend', (e) => {
       e.preventDefault();
-      if (isSample) loadText(book.text, book.id);
+      if (isSystem) loadText(book.text, book.id);
       else loadBook(book.id);
     });
     // Delete button

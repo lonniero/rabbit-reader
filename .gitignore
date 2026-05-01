@@ -1,1 +1,5 @@
 qr-code.png
+node_modules/
+package.json
+package-lock.json
+build-books.js
