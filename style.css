@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════
    RABBIT READER — Styles
    Target: 240×282px (Rabbit R1)
+   Supports landscape rotation
    ═══════════════════════════════════════ */
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -13,10 +14,12 @@
   --text: #f0f0f0;
   --text-dim: #666;
   --text-muted: #444;
+  --vw: 240px;
+  --vh: 282px;
 }
 
 body {
-  width: 240px; height: 282px;
+  width: var(--vw); height: var(--vh);
   overflow: hidden;
   background: var(--bg);
   color: var(--text);
@@ -26,8 +29,14 @@ body {
   user-select: none;
 }
 
+/* ── Landscape ── */
+@media (orientation: landscape) {
+  :root { --vw: 282px; --vh: 240px; }
+  body { width: var(--vw); height: var(--vh); }
+}
+
 /* ── Screens ── */
-.screen { display:none; width:240px; height:282px; position:absolute; top:0; left:0; }
+.screen { display:none; width:var(--vw); height:var(--vh); position:absolute; top:0; left:0; }
 .screen.active { display:flex; flex-direction:column; animation: fadeIn .2s ease-out; }
 
 .screen-header {
@@ -49,13 +58,14 @@ body {
   background:var(--surface); color:var(--text);
   font-size:10px; font-weight:600; letter-spacing:.5px;
   text-align:center; cursor:pointer; transition:all .15s;
+  display:block; text-decoration:none;
 }
 .menu-btn:active { border-color:var(--accent); background:rgba(255,107,43,.08); box-shadow:0 0 12px var(--accent-glow); }
 .menu-hint { font-size:7px; color:var(--text-muted); margin-top:10px; letter-spacing:.5px; }
 
 /* ── Loading Overlay ── */
 .overlay {
-  display:none; position:absolute; top:0; left:0; width:240px; height:282px;
+  display:none; position:absolute; top:0; left:0; width:var(--vw); height:var(--vh);
   background:rgba(10,10,10,.92); z-index:100;
   flex-direction:column; align-items:center; justify-content:center; gap:12px;
 }
@@ -86,32 +96,55 @@ body {
 .input-actions .primary { background:var(--accent); border-color:var(--accent); color:#fff; }
 .input-actions .primary:active { background:#e55a1f; }
 
-/* ── Reader ── */
+/* ═══ Reader (RSVP) ═══ */
 #reader-screen { align-items:center; justify-content:space-between; }
 
-.reader-top { width:100%; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; }
-.wpm-display { font-size:9px; font-weight:700; color:var(--accent); letter-spacing:.5px; }
-.progress-text { font-size:8px; color:var(--text-dim); }
+.reader-top { width:100%; padding:6px 10px; display:flex; align-items:center; gap:4px; }
+.wpm-display { font-size:9px; font-weight:700; color:var(--accent); letter-spacing:.5px; min-width:48px; text-align:center; }
+.progress-text { font-size:8px; color:var(--text-dim); margin-left:auto; }
 
-.progress-bar { width:216px; height:2px; background:#1a1a1a; border-radius:1px; overflow:hidden; }
+.speed-btn {
+  width:20px; height:18px; border:1px solid #333; border-radius:4px;
+  background:var(--surface); color:var(--accent); font-size:12px; font-weight:700;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.speed-btn:active { background:rgba(255,107,43,.15); border-color:var(--accent); }
+
+.progress-bar { width:calc(var(--vw) - 24px); height:2px; background:#1a1a1a; border-radius:1px; overflow:hidden; }
 .progress-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--accent),#ff9f6b); border-radius:1px; transition:width .1s linear; }
 
-.word-zone { flex:1; width:100%; display:flex; align-items:center; justify-content:center; position:relative; cursor:pointer; }
+.word-zone {
+  flex:1; width:100%; display:flex; align-items:center; justify-content:center;
+  position:relative; cursor:pointer; overflow:hidden;
+}
 
-.orp-guide { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:200px; height:48px; pointer-events:none; }
-.orp-guide::before, .orp-guide::after { content:''; position:absolute; left:50%; width:1px; height:6px; background:var(--accent); opacity:.4; }
+/* ORP guide — two ticks at the exact center of word-zone */
+.orp-guide {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:1px; height:52px; pointer-events:none;
+}
+.orp-guide::before, .orp-guide::after {
+  content:''; position:absolute; left:0; width:1px; height:6px;
+  background:var(--accent); opacity:.5;
+}
 .orp-guide::before { top:0; }
 .orp-guide::after { bottom:0; }
 
+/* Word — positioned absolutely so ORP letter aligns at center */
 #current-word {
-  font-size:28px; font-weight:700; letter-spacing:-.5px; text-align:center;
-  white-space:nowrap; min-height:36px; display:flex; align-items:center; justify-content:center;
+  position:absolute; top:50%; transform:translateY(-50%);
+  white-space:nowrap; min-height:36px;
+  font-size:28px; font-weight:700; letter-spacing:-.5px;
+  display:flex; align-items:center;
+  /* left is set by JS to align ORP letter with center guide */
 }
-#current-word .orp { color:var(--accent); }
+#current-word .orp-pre  { color:var(--text); }
+#current-word .orp-letter { color:var(--accent); }
+#current-word .orp-post { color:var(--text); }
 
 .state-indicator { font-size:7px; color:var(--text-muted); letter-spacing:2px; text-transform:uppercase; height:14px; }
 
-.reader-bottom { width:100%; padding:8px 12px 10px; display:flex; justify-content:space-between; align-items:center; }
+.reader-bottom { width:100%; padding:4px 10px; display:flex; justify-content:space-between; align-items:center; }
 .ctrl-btn {
   width:32px; height:24px; border:1px solid #222; border-radius:4px;
   background:var(--surface); color:var(--text-dim); font-size:10px;
@@ -126,9 +159,35 @@ body {
 }
 .play-btn:active { background:rgba(255,107,43,.25); }
 
-.reader-nav { width:100%; padding:0 12px 6px; display:flex; justify-content:center; gap:8px; }
-.ctrl-btn.small { width:auto; padding:0 8px; font-size:8px; height:18px; letter-spacing:.3px; color:var(--text-muted); }
+.reader-nav { width:100%; padding:0 10px 4px; display:flex; justify-content:center; gap:6px; }
+.ctrl-btn.small { width:auto; padding:0 6px; font-size:7px; height:16px; letter-spacing:.3px; color:var(--text-muted); }
 .ctrl-btn.small:active { border-color:var(--accent); color:var(--accent); }
+
+/* ═══ Browse Mode ═══ */
+#browse-screen { padding:0; gap:0; }
+.browse-top {
+  width:100%; padding:6px 10px; display:flex; justify-content:space-between; align-items:center;
+  border-bottom:1px solid #1a1a1a;
+}
+.browse-title { font-size:9px; font-weight:700; color:var(--accent); letter-spacing:.5px; }
+.browse-hint { font-size:7px; color:var(--text-muted); }
+
+.browse-body {
+  flex:1; overflow-y:auto; padding:8px 10px; line-height:1.6;
+  font-size:10px; color:var(--text-dim); word-wrap:break-word;
+  -webkit-overflow-scrolling: touch;
+}
+.browse-body::-webkit-scrollbar { display:none; }
+
+.browse-body .bw { cursor:pointer; }
+.browse-body .bw:active { color:var(--accent); }
+.browse-body .bw-current { color:var(--accent); font-weight:700; background:rgba(255,107,43,.15); border-radius:2px; padding:0 1px; }
+.browse-body .bw-chapter { display:block; color:var(--accent); font-weight:700; font-size:11px; margin:8px 0 4px; letter-spacing:.5px; }
+
+.browse-bottom {
+  width:100%; padding:4px 10px 6px; display:flex; justify-content:center; gap:8px;
+  border-top:1px solid #1a1a1a;
+}
 
 /* ── Chapters ── */
 #chapters-screen { padding:10px; gap:4px; }

@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=240, height=282, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
   <title>Rabbit Reader</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Hidden file input -->
   <!-- File input wrapped in label for WebView compatibility -->
   <input type="file" id="file-input" accept=".pdf,.epub" style="position:absolute;top:-9999px;left:-9999px;opacity:0;">
 
@@ -21,7 +20,7 @@
     <label for="file-input" class="menu-btn" id="upload-label">📄 Upload File</label>
     <div class="menu-btn" data-action="url-import">🔗 Import from URL</div>
     <div class="menu-btn" data-action="library">📚 Library</div>
-    <div class="menu-hint">scroll wheel adjusts speed</div>
+    <div class="menu-hint">− / + to adjust speed</div>
   </div>
 
   <!-- ═══ LOADING OVERLAY ═══ -->
@@ -40,10 +39,12 @@
     </div>
   </div>
 
-  <!-- ═══ READER ═══ -->
+  <!-- ═══ READER (RSVP) ═══ -->
   <div id="reader-screen" class="screen">
     <div class="reader-top">
+      <span class="speed-btn" data-action="speed-down">−</span>
       <span class="wpm-display" id="wpm-label">300 WPM</span>
+      <span class="speed-btn" data-action="speed-up">+</span>
       <span class="progress-text" id="word-count">0 / 0</span>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
@@ -61,8 +62,23 @@
     </div>
     <div class="reader-nav">
       <div class="ctrl-btn small" data-action="restart">↺</div>
+      <div class="ctrl-btn small" data-action="browse-mode">📖 Browse</div>
       <div class="ctrl-btn small" data-action="chapters">☰ Ch.</div>
       <div class="ctrl-btn small" data-action="exit-reader">✕</div>
+    </div>
+  </div>
+
+  <!-- ═══ BROWSE MODE ═══ -->
+  <div id="browse-screen" class="screen">
+    <div class="browse-top">
+      <span class="browse-title" id="browse-title">Browse</span>
+      <span class="browse-hint">tap word → RSVP</span>
+    </div>
+    <div class="browse-body" id="browse-body"></div>
+    <div class="browse-bottom">
+      <div class="ctrl-btn small" data-action="back-reader">← RSVP</div>
+      <div class="ctrl-btn small" data-action="browse-font-down">A−</div>
+      <div class="ctrl-btn small" data-action="browse-font-up">A+</div>
     </div>
   </div>
 
