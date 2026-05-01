@@ -18,11 +18,13 @@ let wpm = 300;
 let isPlaying = false;
 let timer = null;
 let currentBookId = null;
+let currentChapters = [];  // [{title, wordIndex}]
 
 const MIN_WPM = 100;
 const MAX_WPM = 1000;
 const WPM_STEP = 25;
 const STORAGE_KEY = 'rabbit_reader_books';
+const POS_KEY = 'rabbit_reader_positions';  // universal position store
 
 // ── Sample texts ──
 const SAMPLES = [
@@ -91,9 +93,26 @@ function deleteBook(id) {
   saveBooks(getBooks().filter(b => b.id !== id));
 }
 function updateBookPosition(id, pos) {
+  // Update user books store
   const books = getBooks();
   const book = books.find(b => b.id === id);
   if (book) { book.lastPosition = pos; saveBooks(books); }
+  // Always save to universal position store
+  savePosition(id, pos);
+}
+
+// ── Universal position store (works for all book types) ──
+function getPositions() {
+  try { return JSON.parse(localStorage.getItem(POS_KEY)) || {}; }
+  catch { return {}; }
+}
+function savePosition(id, pos) {
+  const positions = getPositions();
+  positions[id] = pos;
+  localStorage.setItem(POS_KEY, JSON.stringify(positions));
+}
+function getPosition(id) {
+  return getPositions()[id] || 0;
 }
 
 // ══════════════════════════════════════
@@ -211,15 +230,29 @@ function loadText(text, bookId) {
   words = text.trim().split(/\s+/).filter(w => w.length > 0);
   wordIndex = 0;
   currentBookId = bookId || null;
+  currentChapters = [];
   isPlaying = false;
   clearTimeout(timer);
 
-  // Resume position if book
+  // Detect chapters from bundled books
   if (bookId) {
-    const books = getBooks();
-    const book = books.find(b => b.id === bookId);
-    if (book && book.lastPosition > 0 && book.lastPosition < words.length) {
-      wordIndex = book.lastPosition;
+    const bundled = (typeof BUNDLED_BOOKS !== 'undefined') ? BUNDLED_BOOKS : [];
+    const bbook = bundled.find(b => b.id === bookId);
+    if (bbook && bbook.chapters) {
+      currentChapters = bbook.chapters;
+    }
+  }
+
+  // Auto-detect chapter markers in text if none from bundle
+  if (currentChapters.length === 0) {
+    detectChapters();
+  }
+
+  // Resume position (universal store)
+  if (bookId) {
+    const savedPos = getPosition(bookId);
+    if (savedPos > 0 && savedPos < words.length) {
+      wordIndex = savedPos;
     }
   }
 
@@ -227,6 +260,24 @@ function loadText(text, bookId) {
   elState.textContent = 'TAP TO START';
   elPlay.textContent = '▶';
   showScreen('reader-screen');
+}
+
+function detectChapters() {
+  // Scan words for chapter patterns
+  const chapterPatterns = /^(chapter|part|book|section|prologue|epilogue|introduction|preface|foreword|afterword)$/i;
+  for (let i = 0; i < words.length - 1; i++) {
+    if (chapterPatterns.test(words[i])) {
+      // Check if next word is a number or roman numeral
+      const next = words[i + 1];
+      if (/^[\dIVXLCDM]+:?$/i.test(next) || /^(one|two|three|four|five|six|seven|eight|nine|ten)$/i.test(next)) {
+        const title = words[i] + ' ' + next.replace(/:$/, '');
+        // Avoid duplicate near-by entries
+        if (currentChapters.length === 0 || i - currentChapters[currentChapters.length - 1].wordIndex > 50) {
+          currentChapters.push({ title, wordIndex: i });
+        }
+      }
+    }
+  }
 }
 
 function loadBook(bookId) {
@@ -308,6 +359,77 @@ function stepBack()    { stopReading(); wordIndex = Math.max(0, wordIndex - 1); 
 function stepForward() { stopReading(); wordIndex = Math.min(words.length - 1, wordIndex + 1); updateDisplay(); }
 function restart()     { stopReading(); wordIndex = 0; updateDisplay(); elState.textContent = 'TAP TO START'; }
 
+// ── Chapter Navigation ──
+function getCurrentChapterIndex() {
+  if (currentChapters.length === 0) return -1;
+  let ch = 0;
+  for (let i = 1; i < currentChapters.length; i++) {
+    if (wordIndex >= currentChapters[i].wordIndex) ch = i;
+    else break;
+  }
+  return ch;
+}
+
+function prevChapter() {
+  if (currentChapters.length === 0) return;
+  const ch = getCurrentChapterIndex();
+  // If we're past the start of current chapter, go back to its start
+  // Otherwise go to previous chapter
+  const target = (ch > 0 && wordIndex - currentChapters[ch].wordIndex > 10) ? ch : Math.max(0, ch - 1);
+  stopReading();
+  wordIndex = currentChapters[target].wordIndex;
+  updateDisplay();
+  elState.textContent = currentChapters[target].title.toUpperCase();
+}
+
+function nextChapter() {
+  if (currentChapters.length === 0) return;
+  const ch = getCurrentChapterIndex();
+  if (ch < currentChapters.length - 1) {
+    stopReading();
+    wordIndex = currentChapters[ch + 1].wordIndex;
+    updateDisplay();
+    elState.textContent = currentChapters[ch + 1].title.toUpperCase();
+  }
+}
+
+function buildChapterList() {
+  const list = $('#chapter-list');
+  list.innerHTML = '';
+  if (currentChapters.length === 0) {
+    list.innerHTML = '<div style="text-align:center;font-size:8px;color:#444;padding:20px;">No chapters detected</div>';
+    return;
+  }
+  const currentCh = getCurrentChapterIndex();
+  currentChapters.forEach((ch, idx) => {
+    const el = document.createElement('div');
+    el.className = 'lib-item' + (idx === currentCh ? ' ch-current' : '');
+    const wordNum = ch.wordIndex.toLocaleString();
+    el.innerHTML = `
+      <div class="lib-item-info">
+        <div class="lib-item-title">${idx === currentCh ? '▸ ' : ''}${ch.title}</div>
+        <div class="lib-item-meta">word ${wordNum}</div>
+      </div>
+    `;
+    el.addEventListener('click', () => {
+      stopReading();
+      wordIndex = ch.wordIndex;
+      updateDisplay();
+      elState.textContent = ch.title.toUpperCase();
+      showScreen('reader-screen');
+    });
+    el.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      stopReading();
+      wordIndex = ch.wordIndex;
+      updateDisplay();
+      elState.textContent = ch.title.toUpperCase();
+      showScreen('reader-screen');
+    });
+    list.appendChild(el);
+  });
+}
+
 // ══════════════════════════════════════
 //  LIBRARY UI
 // ══════════════════════════════════════
@@ -330,7 +452,8 @@ function buildLibrary() {
     const isSample = book.isSample || book.id.startsWith('_sample');
     const isBundled = book.isBundled || book.id.startsWith('_bundled');
     const isSystem = isSample || isBundled;
-    const resumed = (!isSystem && book.lastPosition > 0) ? ' · ▸ resumed' : '';
+    const savedPos = getPosition(book.id);
+    const resumed = (savedPos > 0) ? ' · ▸ ' + Math.round((savedPos / wc) * 100) + '%' : '';
     const icon = isBundled ? '📕' : isSample ? '📝' : '📄';
 
     const el = document.createElement('div');
@@ -423,6 +546,7 @@ document.addEventListener('click', (e) => {
     case 'url-import':  showScreen('url-screen'); break;
     case 'library':     showScreen('library-screen'); break;
     case 'back-menu':   stopReading(); showScreen('menu-screen'); break;
+    case 'back-reader': showScreen('reader-screen'); break;
     case 'load-input':
       const txt = $('#text-input').value;
       if (txt.trim()) loadText(txt);
@@ -431,6 +555,9 @@ document.addEventListener('click', (e) => {
     case 'toggle-play': togglePlay(); break;
     case 'step-back':   stepBack(); break;
     case 'step-fwd':    stepForward(); break;
+    case 'prev-chapter': prevChapter(); break;
+    case 'next-chapter': nextChapter(); break;
+    case 'chapters':    stopReading(); buildChapterList(); showScreen('chapters-screen'); break;
     case 'restart':     restart(); break;
     case 'exit-reader': stopReading(); showScreen('menu-screen'); break;
   }

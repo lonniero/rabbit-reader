@@ -126,6 +126,14 @@ body {
 }
 .play-btn:active { background:rgba(255,107,43,.25); }
 
+.reader-nav { width:100%; padding:0 12px 6px; display:flex; justify-content:center; gap:8px; }
+.ctrl-btn.small { width:auto; padding:0 8px; font-size:8px; height:18px; letter-spacing:.3px; color:var(--text-muted); }
+.ctrl-btn.small:active { border-color:var(--accent); color:var(--accent); }
+
+/* ── Chapters ── */
+#chapters-screen { padding:10px; gap:4px; }
+.ch-current { border-color:var(--accent) !important; background:rgba(255,107,43,.08) !important; }
+
 /* ── Library ── */
 #library-screen { padding:10px; gap:4px; }
 .lib-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:4px; }

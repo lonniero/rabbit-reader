@@ -54,11 +54,23 @@
     <div class="state-indicator" id="state-label">TAP TO START</div>
     <div class="reader-bottom">
       <div class="ctrl-btn" data-action="step-back">◁</div>
-      <div class="ctrl-btn" data-action="restart">↺</div>
+      <div class="ctrl-btn" data-action="prev-chapter">⟨⟨</div>
       <div class="play-btn" id="btn-play" data-action="toggle-play">▶</div>
+      <div class="ctrl-btn" data-action="next-chapter">⟩⟩</div>
       <div class="ctrl-btn" data-action="step-fwd">▷</div>
-      <div class="ctrl-btn" data-action="exit-reader">✕</div>
     </div>
+    <div class="reader-nav">
+      <div class="ctrl-btn small" data-action="restart">↺</div>
+      <div class="ctrl-btn small" data-action="chapters">☰ Ch.</div>
+      <div class="ctrl-btn small" data-action="exit-reader">✕</div>
+    </div>
+  </div>
+
+  <!-- ═══ CHAPTERS ═══ -->
+  <div id="chapters-screen" class="screen">
+    <div class="screen-header">Chapters</div>
+    <div class="lib-list" id="chapter-list"></div>
+    <div class="lib-back" data-action="back-reader">← Back to Reader</div>
   </div>
 
   <!-- ═══ LIBRARY ═══ -->
