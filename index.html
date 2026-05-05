@@ -12,33 +12,11 @@
   <!-- File input wrapped in label for WebView compatibility -->
   <input type="file" id="file-input" accept=".pdf,.epub" style="position:absolute;top:-9999px;left:-9999px;opacity:0;">
 
-  <!-- ═══ MENU ═══ -->
-  <div id="menu-screen" class="screen active">
-    <div class="logo">Rabbit Reader</div>
-    <div class="logo-sub">RSVP Speed Reading</div>
-    <div class="menu-btn" data-action="paste">✎ Paste Text</div>
-    <label for="file-input" class="menu-btn" id="upload-label">📄 Upload File</label>
-    <div class="menu-btn" data-action="url-import">🔗 Import from URL</div>
-    <div class="menu-btn" data-action="library">📚 Library</div>
-    <div class="menu-hint">scroll wheel = seek / speed</div>
-  </div>
-
   <!-- ═══ LOADING OVERLAY ═══ -->
   <div id="loading-overlay" class="overlay">
     <div class="loader-ring"></div>
     <div class="loader-text" id="loader-text">Processing...</div>
   </div>
-
-  <!-- ═══ INPUT ═══ -->
-  <div id="input-screen" class="screen">
-    <div class="screen-header">Paste Your Text</div>
-    <textarea id="text-input" placeholder="Paste or type text here..."></textarea>
-    <div class="input-actions">
-      <button data-action="back-menu">← Back</button>
-      <button class="primary" data-action="load-input">Read →</button>
-    </div>
-  </div>
-
   <!-- ═══ READER (RSVP) ═══ -->
   <div id="reader-screen" class="screen">
     <div class="reader-top">
@@ -87,26 +65,16 @@
   </div>
 
   <!-- ═══ LIBRARY ═══ -->
-  <div id="library-screen" class="screen">
+  <div id="library-screen" class="screen active">
     <div class="screen-header">Library</div>
     <div class="lib-cloud-bar">
       <span id="cloud-status" class="cloud-status">☁ tap to sync</span>
-      <span class="cloud-sync-btn" data-action="sync-cloud">↻</span>
+      <div style="display:flex; gap: 4px;">
+        <label for="file-input" class="cloud-sync-btn" style="width:auto; padding:0 6px; font-size:8px;">+ LOCAL</label>
+        <span class="cloud-sync-btn" data-action="sync-cloud">↻</span>
+      </div>
     </div>
     <div class="lib-list" id="lib-list"></div>
-    <div class="lib-back" data-action="back-menu">← Back to Menu</div>
-  </div>
-
-  <!-- ═══ URL IMPORT ═══ -->
-  <div id="url-screen" class="screen">
-    <div class="screen-header">Import from URL</div>
-    <div style="padding:8px 10px;font-size:8px;color:#666;text-align:center;">Paste a direct link to a PDF or EPUB file</div>
-    <input type="text" id="url-input" placeholder="https://example.com/book.pdf" style="margin:0 10px;padding:8px;border:1px solid #222;border-radius:6px;background:#141414;color:#f0f0f0;font-size:10px;outline:none;font-family:inherit;width:calc(100% - 20px);">
-    <div style="flex:1;"></div>
-    <div class="input-actions" style="padding:0 10px 10px;">
-      <button data-action="back-menu">← Back</button>
-      <button class="primary" data-action="load-url">Import →</button>
-    </div>
   </div>
 
   <script src="books.js"></script>

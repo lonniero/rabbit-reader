@@ -553,29 +553,7 @@ function buildLibrary() {
   });
 }
 
-// ══════════════════════════════════════
-//  URL IMPORT
-// ══════════════════════════════════════
-async function loadFromURL() {
-  const url = ($('#url-input').value || '').trim();
-  if (!url) return;
-  showLoader('Downloading...');
-  try {
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const ab = await resp.arrayBuffer();
-    const ext = url.split('.').pop().split('?')[0].toLowerCase();
-    let text = null;
-    if (ext === 'pdf') text = await parsePDF(ab);
-    else if (ext === 'epub') text = await parseEPUB(ab);
-    else { hideLoader(); alert('URL must point to a .pdf or .epub file.'); return; }
-    if (text && text.length > 0) {
-      const title = url.split('/').pop().split('.')[0].replace(/[-_]/g, ' ');
-      const id = addBook(title, text);
-      hideLoader(); loadBook(id);
-    } else { hideLoader(); alert('Could not extract text.'); }
-  } catch (err) { hideLoader(); alert('Failed: ' + err.message); }
-}
+
 
 // ══════════════════════════════════════
 //  EVENT DELEGATION
@@ -584,13 +562,9 @@ document.addEventListener('click', (e) => {
   const action = e.target.closest('[data-action]')?.dataset.action;
   if (!action) return;
   switch (action) {
-    case 'paste':       showScreen('input-screen'); break;
-    case 'url-import':  showScreen('url-screen'); break;
     case 'library':     showScreen('library-screen'); break;
-    case 'back-menu':   stopReading(); showScreen('menu-screen'); break;
+    case 'back-menu':   stopReading(); showScreen('library-screen'); break;
     case 'back-reader': showScreen('reader-screen'); break;
-    case 'load-input':  { const t = $('#text-input').value; if (t.trim()) loadText(t); } break;
-    case 'load-url':    loadFromURL(); break;
     case 'toggle-play': togglePlay(); break;
     case 'speed-up':    changeSpeed(WPM_STEP); break;
     case 'speed-down':  changeSpeed(-WPM_STEP); break;
@@ -600,7 +574,7 @@ document.addEventListener('click', (e) => {
     case 'restart':     restart(); break;
     case 'browse-font-up':   changeBrowseFont(1); break;
     case 'browse-font-down': changeBrowseFont(-1); break;
-    case 'exit-reader': stopReading(); showScreen('menu-screen'); break;
+    case 'exit-reader': stopReading(); showScreen('library-screen'); break;
     case 'sync-cloud':  syncCloudBooks(); break;
   }
 });
