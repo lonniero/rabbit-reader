@@ -16,7 +16,7 @@ if (typeof pdfjsLib !== 'undefined') {
 // e.g. 'https://rabbit-command.railway.app' or 'http://localhost:3000'
 const API_BASE = (typeof RABBIT_API_BASE !== 'undefined')
   ? RABBIT_API_BASE
-  : 'http://localhost:3000';
+  : 'https://rabbit-bot-production.up.railway.app';
 
 // ══════════════════════════════════════
 //  STATE
