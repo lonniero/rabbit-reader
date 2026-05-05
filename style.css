@@ -37,14 +37,22 @@ body {
   body { width: var(--vw); height: var(--vh); }
 }
 
-/* Force landscape when class is added via DeviceOrientation API */
+/* Force landscape when detected via JS (R1 has no auto-rotate) */
 body.force-landscape {
-  --vw: 282px; --vh: 240px;
-  width: var(--vw); height: var(--vh);
+  width: 282px; height: 240px;
+  transform: rotate(90deg);
+  transform-origin: top left;
+  position: absolute;
+  top: 0; left: 240px;
 }
+body.force-landscape .screen { width: 282px; height: 240px; }
+body.force-landscape .overlay { width: 282px; height: 240px; }
+body.force-landscape .progress-bar { width: calc(282px - 24px); }
+
 body.force-portrait {
-  --vw: 240px; --vh: 282px;
-  width: var(--vw); height: var(--vh);
+  width: 240px; height: 282px;
+  transform: none;
+  position: static;
 }
 
 /* ── Screens ── */

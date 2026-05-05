@@ -682,8 +682,43 @@ if (typeof PluginMessageHandler === 'undefined') {
   });
 }
 
-// ── Landscape: handled by CSS @media (orientation: landscape) ──
-// R1 OS rotates the viewport natively; no JS needed.
+// ── Landscape rotation (R1 has no auto-rotate — must be coded) ──
+// Detect device tilt via accelerometer and rotate the UI with CSS transforms
+let _isLandscape = false;
+
+function setLandscape(landscape) {
+  if (landscape === _isLandscape) return;
+  _isLandscape = landscape;
+  if (landscape) {
+    document.body.classList.add('force-landscape');
+    document.body.classList.remove('force-portrait');
+  } else {
+    document.body.classList.remove('force-landscape');
+    document.body.classList.add('force-portrait');
+  }
+}
+
+// Try DeviceOrientation (accelerometer)
+if (window.DeviceOrientationEvent) {
+  // Some browsers require permission (iOS 13+)
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    // Will need a user gesture to request — skip for now, rely on fallback
+  } else {
+    window.addEventListener('deviceorientation', (e) => {
+      if (e.gamma === null) return;
+      // gamma > 50 or < -50 means device is tilted sideways
+      setLandscape(Math.abs(e.gamma) > 50);
+    });
+  }
+}
+
+// Also listen for screen.orientation changes (if R1 WebView supports it)
+if (screen.orientation) {
+  screen.orientation.addEventListener('change', () => {
+    const type = screen.orientation.type;
+    setLandscape(type.includes('landscape'));
+  });
+}
 
 // ── Init: auto-resume last book ──
 (async function init() {
