@@ -705,21 +705,15 @@ if (window.DeviceOrientationEvent) {
     // Will need a user gesture to request — skip for now, rely on fallback
   } else {
     window.addEventListener('deviceorientation', (e) => {
-      if (e.gamma === null || e.beta === null) return;
+      if (e.gamma === null) return;
       
-      // Normalize beta to [-90, 90] (handles if device is tilted past straight up)
-      let normalizedBeta = e.beta;
-      if (normalizedBeta > 90) normalizedBeta = 180 - normalizedBeta;
-      else if (normalizedBeta < -90) normalizedBeta = -180 - normalizedBeta;
-      
-      const absBeta = Math.abs(normalizedBeta);
       const absGamma = Math.abs(e.gamma);
 
-      // Compare beta (portrait tilt) vs gamma (landscape tilt)
-      // Hysteresis of 10 degrees prevents flickering when held diagonally
-      if (!_isLandscape && absGamma > absBeta + 10) {
+      // Trigger landscape at > 45 degrees, reset to portrait at < 25 degrees.
+      // Hysteresis prevents flickering.
+      if (!_isLandscape && absGamma > 45) {
         setLandscape(true);
-      } else if (_isLandscape && absBeta > absGamma + 10) {
+      } else if (_isLandscape && absGamma < 25) {
         setLandscape(false);
       }
     });
