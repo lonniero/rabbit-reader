@@ -682,20 +682,8 @@ if (typeof PluginMessageHandler === 'undefined') {
   });
 }
 
-// ── Landscape rotation detection (R1 accelerometer) ──
-if (window.DeviceOrientationEvent) {
-  window.addEventListener('deviceorientation', (e) => {
-    const gamma = e.gamma; // tilt left/right: -90 to 90
-    if (gamma === null) return;
-    if (Math.abs(gamma) > 45) {
-      document.body.classList.add('force-landscape');
-      document.body.classList.remove('force-portrait');
-    } else {
-      document.body.classList.add('force-portrait');
-      document.body.classList.remove('force-landscape');
-    }
-  });
-}
+// ── Landscape: handled by CSS @media (orientation: landscape) ──
+// R1 OS rotates the viewport natively; no JS needed.
 
 // ── Init: auto-resume last book ──
 (async function init() {
