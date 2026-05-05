@@ -595,7 +595,7 @@ function doScrollUp() {
   if (isPlaying) {
     changeSpeed(-WPM_STEP);
   } else {
-    wordIndex = Math.min(words.length - 1, wordIndex + 1); updateDisplay();
+    wordIndex = Math.max(0, wordIndex - 1); updateDisplay();
   }
 }
 
@@ -603,7 +603,7 @@ function doScrollDown() {
   if (isPlaying) {
     changeSpeed(WPM_STEP);
   } else {
-    wordIndex = Math.max(0, wordIndex - 1); updateDisplay();
+    wordIndex = Math.min(words.length - 1, wordIndex + 1); updateDisplay();
   }
 }
 
