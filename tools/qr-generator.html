@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐰 R1 Creation QR Generator</title>
+  <!-- Same library the official Rabbit SDK uses -->
+  <script src="https://unpkg.com/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111113;
+      --surface-2: #18181b;
+      --surface-3: #1e1e22;
+      --accent: #FE5000;
+      --accent-dim: rgba(254,80,0,.12);
+      --accent-glow: rgba(254,80,0,.25);
+      --text: #f0f0f0;
+      --text-dim: #a0a0a8;
+      --text-muted: #555;
+      --border: #27272a;
+      --green: #22c55e;
+      --red: #ef4444;
+      --radius: 12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 48px 40px 32px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .header-brand {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 8px;
+    }
+    .header-logo {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #ff9f6b);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    .header h1 {
+      font-size: 22px; font-weight: 800; letter-spacing: -.5px;
+      background: linear-gradient(135deg, var(--text), var(--text-dim));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header p {
+      font-size: 13px; color: var(--text-dim); line-height: 1.5;
+      margin-top: 4px;
+    }
+
+    /* ── Grid ── */
+    .grid {
+      max-width: 960px; margin: 0 auto;
+      padding: 0 40px 48px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .card:hover {
+      border-color: rgba(254,80,0,.25);
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    }
+
+    .card-qr {
+      background: #fff;
+      padding: 20px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      min-height: 240px;
+    }
+    .card-qr canvas { border-radius: 4px; }
+    .card-qr .r1-badge {
+      position: absolute; bottom: 8px; right: 8px;
+      background: var(--bg); color: var(--accent);
+      font-size: 9px; font-weight: 700; letter-spacing: 1px;
+      padding: 3px 8px; border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .card-info { padding: 16px 20px; }
+    .card-name {
+      font-size: 15px; font-weight: 700; color: var(--text);
+      margin-bottom: 2px;
+    }
+    .card-url {
+      font-size: 11px; color: var(--text-muted); font-family: monospace;
+      word-break: break-all; line-height: 1.4;
+    }
+    .card-desc {
+      font-size: 11px; color: var(--text-dim); margin-top: 4px;
+      line-height: 1.3;
+    }
+
+    .card-actions {
+      padding: 0 20px 16px;
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .card-actions-top {
+      padding: 0 20px 8px;
+    }
+    .btn-launch {
+      width: 100%; padding: 9px 0; border: 1px solid rgba(34,197,94,.25);
+      border-radius: 8px; font-size: 12px; font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      background: rgba(34,197,94,.08); color: var(--green);
+      cursor: pointer; transition: all .15s;
+      text-align: center; letter-spacing: .3px;
+    }
+    .btn-launch:hover { background: rgba(34,197,94,.18); border-color: var(--green); }
+    .btn {
+      flex: 1; padding: 8px 0; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 11px; font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer; transition: all .15s;
+      text-align: center; letter-spacing: .3px;
+    }
+    .btn-primary {
+      background: var(--accent-dim); color: var(--accent);
+      border-color: rgba(254,80,0,.2);
+    }
+    .btn-primary:hover { background: var(--accent-glow); border-color: var(--accent); }
+    .btn-secondary {
+      background: var(--surface-2); color: var(--text-dim);
+    }
+    .btn-secondary:hover { background: var(--surface-3); color: var(--text); border-color: #444; }
+
+    .btn-delete {
+      flex: none; width: 36px; padding: 8px 0;
+      background: var(--surface-2); color: var(--text-muted);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 12px; cursor: pointer; transition: all .15s;
+    }
+    .btn-delete:hover { background: rgba(239,68,68,.1); color: var(--red); border-color: rgba(239,68,68,.3); }
+
+    /* ── Add Card ── */
+    .card-add {
+      background: var(--surface);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 320px; cursor: pointer;
+      transition: all .2s;
+    }
+    .card-add:hover {
+      border-color: var(--accent);
+      background: rgba(254,80,0,.03);
+    }
+    .card-add-icon {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: var(--accent-dim); color: var(--accent);
+      font-size: 24px; font-weight: 300;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 12px; transition: transform .2s;
+    }
+    .card-add:hover .card-add-icon { transform: scale(1.1); }
+    .card-add-label {
+      font-size: 13px; font-weight: 600; color: var(--text-dim);
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.7); backdrop-filter: blur(8px);
+      z-index: 100; align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 32px;
+      width: 90%; max-width: 440px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.5);
+    }
+    .modal h2 {
+      font-size: 16px; font-weight: 700; margin-bottom: 20px;
+      color: var(--text);
+    }
+    .modal label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: var(--text-dim); letter-spacing: .5px;
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .modal input, .modal textarea {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--surface-2); color: var(--text);
+      font-size: 13px; font-family: 'Inter', sans-serif;
+      outline: none; transition: border-color .15s;
+      margin-bottom: 16px;
+    }
+    .modal textarea {
+      resize: vertical; min-height: 60px;
+    }
+    .modal input:focus, .modal textarea:focus { border-color: var(--accent); }
+    .modal input::placeholder, .modal textarea::placeholder { color: var(--text-muted); }
+
+    .modal-row {
+      display: flex; gap: 12px;
+    }
+    .modal-row > div { flex: 1; }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+    .modal-actions .btn { padding: 10px 0; font-size: 13px; }
+
+    .color-input-wrapper {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 16px;
+    }
+    .color-input-wrapper input[type="color"] {
+      width: 40px; height: 38px; padding: 2px; border-radius: 8px;
+      cursor: pointer; margin-bottom: 0;
+    }
+    .color-input-wrapper input[type="text"] {
+      flex: 1; margin-bottom: 0;
+    }
+
+    /* ── Payload Preview ── */
+    .payload-preview {
+      background: var(--surface-3); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 10px; font-family: monospace; color: var(--text-dim);
+      margin-bottom: 16px; max-height: 80px; overflow-y: auto;
+      word-break: break-all; line-height: 1.5;
+    }
+    .payload-preview .key { color: var(--accent); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--surface-2); border: 1px solid var(--border);
+      padding: 10px 20px; border-radius: 10px;
+      font-size: 12px; color: var(--text-dim); font-weight: 500;
+      opacity: 0; transition: opacity .3s; pointer-events: none;
+      z-index: 200;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ── Status Dot ── */
+    .status-dot {
+      display: inline-block; width: 6px; height: 6px;
+      border-radius: 50%; margin-right: 6px; vertical-align: middle;
+    }
+    .status-dot.live { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,.5); }
+    .status-dot.local { background: var(--text-muted); }
+
+    /* ── Format badge ── */
+    .format-badge {
+      display: inline-block; font-size: 9px; font-weight: 600;
+      letter-spacing: .5px; text-transform: uppercase;
+      padding: 2px 6px; border-radius: 4px;
+      background: var(--accent-dim); color: var(--accent);
+      margin-left: 6px; vertical-align: middle;
+    }
+
+    @media (max-width: 640px) {
+      .header { padding: 32px 20px 24px; }
+      .grid { padding: 0 20px 32px; grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-brand">
+      <div class="header-logo">🐰</div>
+      <h1>R1 Creation QR Generator</h1>
+    </div>
+    <p>Generate scannable R1 Creation QR codes. Uses the official Rabbit SDK JSON payload format.</p>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <!-- Add Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <h2>Add Creation</h2>
+
+      <label>Title <span style="color:var(--accent)">*</span></label>
+      <input type="text" id="input-title" placeholder="e.g. Rabbit Reader">
+
+      <label>URL <span style="color:var(--accent)">*</span></label>
+      <input type="url" id="input-url" placeholder="https://lonniero.github.io/rabbit-reader/">
+
+      <label>Description</label>
+      <textarea id="input-description" placeholder="RSVP speed-reading for the R1" rows="2"></textarea>
+
+      <label>Icon URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+      <input type="url" id="input-icon" placeholder="https://example.com/icon.png">
+
+      <label>Theme Color</label>
+      <div class="color-input-wrapper">
+        <input type="color" id="input-color-picker" value="#FE5000">
+        <input type="text" id="input-color-hex" value="#FE5000" placeholder="#FE5000">
+      </div>
+
+      <label>QR Payload Preview</label>
+      <div class="payload-preview" id="payload-preview">
+        {"title":"","url":"","description":"","iconUrl":"","themeColor":"#FE5000"}
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveCreation()">Generate QR</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ══════════════════════════════════════
+    //  RABBIT R1 CREATION QR FORMAT
+    //  The R1 expects a JSON payload:
+    //  {"title":"...","url":"...","description":"...","iconUrl":"...","themeColor":"#FE5000"}
+    // ══════════════════════════════════════
+
+    const STORAGE_KEY = 'r1_creations';
+
+    const DEFAULTS = [
+      {
+        title: 'Rabbit Reader',
+        url: 'https://lonniero.github.io/rabbit-reader/',
+        description: 'RSVP speed-reading for the R1',
+        iconUrl: '',
+        themeColor: '#FE5000'
+      },
+      {
+        title: 'Rabbit RSS',
+        url: 'https://lonniero.github.io/rabbit-reader/rss/',
+        description: 'Timeline RSS feed reader for the R1',
+        iconUrl: '',
+        themeColor: '#FE5000'
+      },
+    ];
+
+    function getCreations() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (saved && saved.length > 0) return saved;
+      } catch {}
+      return [...DEFAULTS];
+    }
+
+    function saveCreations(list) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    // Build the exact JSON payload the R1 expects
+    function buildPayload(creation) {
+      return JSON.stringify({
+        title: creation.title || '',
+        url: creation.url || '',
+        description: creation.description || '',
+        iconUrl: creation.iconUrl || '',
+        themeColor: creation.themeColor || '#FE5000'
+      });
+    }
+
+    // ══════════════════════════════════════
+    //  RENDER
+    // ══════════════════════════════════════
+
+    const qrInstances = {};
+
+    function render() {
+      const grid = document.getElementById('grid');
+      const creations = getCreations();
+
+      grid.innerHTML = '';
+
+      for (let i = 0; i < creations.length; i++) {
+        const c = creations[i];
+        const payload = buildPayload(c);
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-qr" id="qr-${i}">
+            <div class="r1-badge">R1</div>
+          </div>
+          <div class="card-info">
+            <div class="card-name">
+              <span class="status-dot live"></span>${esc(c.title)}
+              <span class="format-badge">JSON</span>
+            </div>
+            <div class="card-url">${esc(c.url)}</div>
+            ${c.description ? `<div class="card-desc">${esc(c.description)}</div>` : ''}
+          </div>
+          <div class="card-actions card-actions-top">
+            <button class="btn-launch" onclick="launchCreation(${i})">🚀 Launch App</button>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-primary" onclick="downloadQR(${i})">⬇ Download PNG</button>
+            <button class="btn btn-secondary" onclick="copyPayload(${i})">📋 Payload</button>
+            <button class="btn-delete" onclick="removeCreation(${i})" title="Remove">✕</button>
+          </div>
+        `;
+        grid.appendChild(card);
+
+        // Generate QR using QRCodeStyling — same library the official SDK uses
+        const container = card.querySelector(`#qr-${i}`);
+        try {
+          const qr = new QRCodeStyling({
+            width: 220,
+            height: 220,
+            type: 'canvas',
+            data: payload,
+            margin: 8,
+            qrOptions: {
+              typeNumber: 0,
+              mode: 'Byte',
+              errorCorrectionLevel: 'L'
+            },
+            dotsOptions: {
+              color: '#000000',
+              type: 'rounded'
+            },
+            backgroundOptions: {
+              color: '#ffffff'
+            },
+            cornersSquareOptions: {
+              color: '#000000',
+              type: 'extra-rounded'
+            },
+            cornersDotOptions: {
+              color: '#000000',
+              type: 'dot'
+            }
+          });
+
+          qrInstances[i] = qr;
+          qr.append(container);
+        } catch (err) {
+          container.innerHTML = `<div style="color:#e44;font-size:11px;">QR Error: ${err.message}</div>` + container.innerHTML;
+        }
+      }
+
+      // Add button
+      const addCard = document.createElement('div');
+      addCard.className = 'card-add';
+      addCard.onclick = openModal;
+      addCard.innerHTML = `
+        <div class="card-add-icon">+</div>
+        <div class="card-add-label">Add Creation</div>
+      `;
+      grid.appendChild(addCard);
+    }
+
+    // ══════════════════════════════════════
+    //  ACTIONS
+    // ══════════════════════════════════════
+
+    function downloadQR(idx) {
+      const creations = getCreations();
+      const c = creations[idx];
+      const qr = qrInstances[idx];
+      if (!qr) return toast('No QR to download');
+
+      qr.download({
+        name: `${c.title.toLowerCase().replace(/\s+/g, '-')}-r1-qr`,
+        extension: 'png'
+      });
+      toast(`Downloaded ${c.title} QR`);
+    }
+
+    function launchCreation(idx) {
+      const creations = getCreations();
+      window.open(creations[idx].url, '_blank');
+    }
+
+    function copyPayload(idx) {
+      const creations = getCreations();
+      const payload = buildPayload(creations[idx]);
+      navigator.clipboard.writeText(payload).then(() => {
+        toast('JSON payload copied');
+      });
+    }
+
+    function removeCreation(idx) {
+      const creations = getCreations();
+      const name = creations[idx].title;
+      if (!confirm(`Remove "${name}"?`)) return;
+      creations.splice(idx, 1);
+      saveCreations(creations);
+      render();
+      toast(`Removed ${name}`);
+    }
+
+    // ══════════════════════════════════════
+    //  MODAL
+    // ══════════════════════════════════════
+
+    function openModal() {
+      document.getElementById('input-title').value = '';
+      document.getElementById('input-url').value = '';
+      document.getElementById('input-description').value = '';
+      document.getElementById('input-icon').value = '';
+      document.getElementById('input-color-picker').value = '#FE5000';
+      document.getElementById('input-color-hex').value = '#FE5000';
+      updatePayloadPreview();
+      document.getElementById('modal').classList.add('active');
+      setTimeout(() => document.getElementById('input-title').focus(), 100);
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+    }
+
+    function updatePayloadPreview() {
+      const data = {
+        title: document.getElementById('input-title').value.trim(),
+        url: document.getElementById('input-url').value.trim(),
+        description: document.getElementById('input-description').value.trim(),
+        iconUrl: document.getElementById('input-icon').value.trim(),
+        themeColor: document.getElementById('input-color-hex').value.trim() || '#FE5000'
+      };
+      document.getElementById('payload-preview').textContent = JSON.stringify(data, null, 2);
+    }
+
+    // Live preview updates
+    ['input-title', 'input-url', 'input-description', 'input-icon', 'input-color-hex'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updatePayloadPreview);
+    });
+
+    // Color picker sync
+    document.getElementById('input-color-picker').addEventListener('input', (e) => {
+      document.getElementById('input-color-hex').value = e.target.value.toUpperCase();
+      updatePayloadPreview();
+    });
+    document.getElementById('input-color-hex').addEventListener('input', (e) => {
+      const v = e.target.value;
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        document.getElementById('input-color-picker').value = v;
+      }
+    });
+
+    function saveCreation() {
+      const title = document.getElementById('input-title').value.trim();
+      const url = document.getElementById('input-url').value.trim();
+      const description = document.getElementById('input-description').value.trim();
+      const iconUrl = document.getElementById('input-icon').value.trim();
+      const themeColor = document.getElementById('input-color-hex').value.trim() || '#FE5000';
+
+      if (!title) return toast('Title is required');
+      if (!url) return toast('URL is required');
+
+      const creations = getCreations();
+      creations.push({ title, url, description, iconUrl, themeColor });
+      saveCreations(creations);
+      closeModal();
+      render();
+      toast(`Added ${title}`);
+    }
+
+    // Close modal on overlay click
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target.id === 'modal') closeModal();
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Enter' && document.getElementById('modal').classList.contains('active')) {
+        if (document.activeElement.tagName !== 'TEXTAREA') saveCreation();
+      }
+    });
+
+    // ══════════════════════════════════════
+    //  UTILS
+    // ══════════════════════════════════════
+
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    let toastTimer;
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    // ══════════════════════════════════════
+    //  INIT
+    // ══════════════════════════════════════
+    render();
+  </script>
+</body>
+</html>
