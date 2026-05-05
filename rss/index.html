@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
+  <title>Rabbit RSS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ═══ TIMELINE ═══ -->
+  <div id="timeline-screen" class="screen active">
+    <div class="tl-header">
+      <div class="tl-brand">
+        <span class="tl-logo">📰</span>
+        <span class="tl-title">Rabbit RSS</span>
+      </div>
+      <div class="tl-feeds-btn" data-action="show-feeds">☰</div>
+    </div>
+    <div class="tl-filters" id="tl-filters">
+      <div class="filter-pill active" data-category="all">All</div>
+    </div>
+    <div class="tl-list" id="tl-list">
+      <div class="tl-loading">
+        <div class="loader-ring"></div>
+        <div class="loader-text">Loading feeds...</div>
+      </div>
+    </div>
+    <div class="tl-status" id="tl-status"></div>
+  </div>
+
+  <!-- ═══ ARTICLE VIEW ═══ -->
+  <div id="article-screen" class="screen">
+    <div class="art-header">
+      <div class="art-back" data-action="back-timeline">←</div>
+      <div class="art-source" id="art-source"></div>
+    </div>
+    <div class="art-meta" id="art-meta"></div>
+    <div class="art-body" id="art-body">
+      <div class="tl-loading">
+        <div class="loader-ring"></div>
+        <div class="loader-text">Fetching article...</div>
+      </div>
+    </div>
+    <div class="art-bottom">
+      <div class="art-btn" data-action="back-timeline">← Feed</div>
+      <div class="art-btn primary" data-action="start-rsvp">⚡ RSVP</div>
+      <div class="art-btn" data-action="art-font-down">A−</div>
+      <div class="art-btn" data-action="art-font-up">A+</div>
+    </div>
+  </div>
+
+  <!-- ═══ RSVP READER ═══ -->
+  <div id="reader-screen" class="screen">
+    <div class="reader-top">
+      <span class="speed-btn" data-action="speed-down">−</span>
+      <span class="wpm-display" id="wpm-label">300 WPM</span>
+      <span class="speed-btn" data-action="speed-up">+</span>
+      <span class="progress-text" id="word-count">0 / 0</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="word-zone" id="word-zone">
+      <div class="orp-guide"></div>
+      <div id="current-word">Ready</div>
+    </div>
+    <div class="state-indicator" id="state-label">TAP TO START</div>
+    <div class="reader-bottom">
+      <div class="ctrl-btn" data-action="step-back">◁</div>
+      <div class="play-btn" id="btn-play" data-action="toggle-play">▶</div>
+      <div class="ctrl-btn" data-action="step-fwd">▷</div>
+    </div>
+    <div class="reader-nav">
+      <div class="ctrl-btn small" data-action="restart">↺</div>
+      <div class="ctrl-btn small" data-action="browse-mode">📖 Browse</div>
+      <div class="ctrl-btn small" data-action="back-article">✕ Exit</div>
+    </div>
+  </div>
+
+  <!-- ═══ BROWSE MODE ═══ -->
+  <div id="browse-screen" class="screen">
+    <div class="browse-top">
+      <span class="browse-title" id="browse-title">Browse</span>
+      <span class="browse-hint">tap word → RSVP</span>
+    </div>
+    <div class="browse-body" id="browse-body"></div>
+    <div class="browse-bottom">
+      <div class="ctrl-btn small" data-action="back-rsvp">← RSVP</div>
+      <div class="ctrl-btn small" data-action="browse-font-down">A−</div>
+      <div class="ctrl-btn small" data-action="browse-font-up">A+</div>
+    </div>
+  </div>
+
+  <!-- ═══ FEEDS MANAGER ═══ -->
+  <div id="feeds-screen" class="screen">
+    <div class="screen-header">Your Feeds</div>
+    <div class="feeds-list" id="feeds-list"></div>
+    <div class="feeds-hint">Drop links in #rss-feeds on Discord to add</div>
+    <div class="feeds-back" data-action="back-timeline">← Back</div>
+  </div>
+
+  <!-- ═══ LOADING OVERLAY ═══ -->
+  <div id="loading-overlay" class="overlay">
+    <div class="loader-ring"></div>
+    <div class="loader-text" id="loader-text">Loading...</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
