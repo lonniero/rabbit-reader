@@ -1,12 +1,22 @@
 // ═══════════════════════════════════════
 //  RABBIT READER — App Logic
 //  RSVP Engine + Browse Mode + PDF/EPUB
+//  + Rabbit Command API (cloud books)
 // ═══════════════════════════════════════
 
 if (typeof pdfjsLib !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
+
+// ══════════════════════════════════════
+//  CONFIG — Rabbit Command API
+// ══════════════════════════════════════
+// When deployed, point this to your Rabbit Command server URL.
+// e.g. 'https://rabbit-command.railway.app' or 'http://localhost:3000'
+const API_BASE = (typeof RABBIT_API_BASE !== 'undefined')
+  ? RABBIT_API_BASE
+  : 'http://localhost:3000';
 
 // ══════════════════════════════════════
 //  STATE
@@ -20,9 +30,20 @@ let currentBookId = null;
 let currentChapters = [];
 let browseFontSize = 10;
 
+// Cloud books (fetched from Rabbit Command API)
+let cloudBooks = [];          // metadata from GET /api/books
+let cloudTextCache = {};      // { pageId: fullText } — avoids re-fetching
+let cloudSyncStatus = 'idle'; // 'idle' | 'syncing' | 'done' | 'error'
+
 const MIN_WPM = 100, MAX_WPM = 1000, WPM_STEP = 25;
 const STORAGE_KEY = 'rabbit_reader_books';
 const POS_KEY = 'rabbit_reader_positions';
+const LAST_BOOK_KEY = 'rabbit_reader_last_book';
+
+// Side-button double-click detection
+let _sideClickCount = 0;
+let _sideClickTimer = null;
+const DOUBLE_CLICK_MS = 400;
 
 // Canvas for measuring text widths (ORP alignment)
 const _mc = document.createElement('canvas').getContext('2d');
@@ -58,7 +79,11 @@ const elLoaderTxt = $('#loader-text');
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if (id === 'library-screen') buildLibrary();
+  if (id === 'library-screen') {
+    buildLibrary();
+    // Auto-sync cloud books if we haven't yet this session
+    if (cloudSyncStatus === 'idle') syncCloudBooks();
+  }
 }
 function showLoader(msg) { elLoaderTxt.textContent = msg || 'Processing...'; elOverlay.classList.add('active'); }
 function hideLoader() { elOverlay.classList.remove('active'); }
@@ -83,6 +108,10 @@ function updateBookPosition(id, pos) {
   if (book) { book.lastPosition = pos; saveBooks(books); }
   savePosition(id, pos);
 }
+
+// Track last-opened book for auto-resume
+function setLastBook(id) { try { localStorage.setItem(LAST_BOOK_KEY, id); } catch {} }
+function getLastBook() { try { return localStorage.getItem(LAST_BOOK_KEY); } catch { return null; } }
 
 // Universal position store
 function getPositions() { try { return JSON.parse(localStorage.getItem(POS_KEY)) || {}; } catch { return {}; } }
@@ -177,6 +206,7 @@ function loadText(text, bookId) {
   if (bookId) {
     const pos = getPosition(bookId);
     if (pos > 0 && pos < words.length) wordIndex = pos;
+    setLastBook(bookId);
   }
 
   updateDisplay();
@@ -401,6 +431,56 @@ function changeBrowseFont(delta) {
 }
 
 // ══════════════════════════════════════
+//  CLOUD SYNC — Rabbit Command API
+// ══════════════════════════════════════
+
+/**
+ * Fetch book metadata from Rabbit Command API.
+ * Populates cloudBooks[] and triggers a library rebuild.
+ */
+async function syncCloudBooks() {
+  const statusEl = $('#cloud-status');
+  cloudSyncStatus = 'syncing';
+  if (statusEl) statusEl.textContent = '☁ syncing…';
+  try {
+    const resp = await fetch(API_BASE + '/api/books');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    cloudBooks = await resp.json();
+    cloudSyncStatus = 'done';
+    if (statusEl) statusEl.textContent = '☁ ' + cloudBooks.length + ' cloud';
+  } catch (err) {
+    console.warn('[cloud] Sync failed:', err.message);
+    cloudSyncStatus = 'error';
+    if (statusEl) statusEl.textContent = '☁ offline';
+  }
+  // Rebuild library with fresh data
+  buildLibrary();
+}
+
+/**
+ * Fetch the full text of a cloud book by its Notion page ID.
+ * Uses an in-memory cache to avoid re-fetching.
+ */
+async function loadCloudBookText(pageId) {
+  // Return from cache if already loaded
+  if (cloudTextCache[pageId]) return cloudTextCache[pageId];
+
+  showLoader('Downloading from cloud…');
+  try {
+    const resp = await fetch(API_BASE + '/api/books/' + pageId + '/text');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    cloudTextCache[pageId] = data.text;
+    hideLoader();
+    return data.text;
+  } catch (err) {
+    hideLoader();
+    console.error('[cloud] Failed to load book text:', err);
+    return null;
+  }
+}
+
+// ══════════════════════════════════════
 //  LIBRARY UI
 // ══════════════════════════════════════
 function buildLibrary() {
@@ -408,7 +488,14 @@ function buildLibrary() {
   list.innerHTML = '';
   const userBooks = getBooks();
   const bundled = (typeof BUNDLED_BOOKS !== 'undefined') ? BUNDLED_BOOKS : [];
-  const allBooks = [...userBooks, ...bundled, ...SAMPLES];
+
+  // Cloud books → tagged for rendering
+  const cloudEntries = cloudBooks.map(b => ({
+    ...b,
+    isCloud: true,
+  }));
+
+  const allBooks = [...cloudEntries, ...userBooks, ...bundled, ...SAMPLES];
 
   if (allBooks.length === 0) {
     list.innerHTML = '<div style="text-align:center;font-size:8px;color:#444;padding:20px;">No books yet.<br>Upload a PDF or EPUB!</div>';
@@ -416,24 +503,42 @@ function buildLibrary() {
   }
 
   allBooks.forEach(book => {
-    const wc = book.wordCount || book.text.trim().split(/\s+/).length;
-    const mins = Math.ceil(wc / wpm);
+    const wc = book.wordCount || (book.text ? book.text.trim().split(/\s+/).length : 0);
+    const mins = Math.ceil(wc / wpm) || '?';
     const isSample = book.isSample || book.id.startsWith('_sample');
     const isBundled = book.isBundled || book.id.startsWith('_bundled');
-    const isSystem = isSample || isBundled;
+    const isCloud = book.isCloud === true;
+    const isSystem = isSample || isBundled || isCloud;
     const savedPos = getPosition(book.id);
-    const resumed = (savedPos > 0) ? ' · ▸ ' + Math.round((savedPos / wc) * 100) + '%' : '';
-    const icon = isBundled ? '📕' : isSample ? '📝' : '📄';
+    const resumed = (savedPos > 0 && wc > 0) ? ' · ▸ ' + Math.round((savedPos / wc) * 100) + '%' : '';
+    const icon = isCloud ? '☁️' : isBundled ? '📕' : isSample ? '📝' : '📄';
+    const sourceLabel = isCloud ? ' · via Discord' : '';
 
     const el = document.createElement('div');
-    el.className = 'lib-item';
+    el.className = 'lib-item' + (isCloud ? ' lib-item-cloud' : '');
     el.innerHTML =
       '<div class="lib-item-info"><div class="lib-item-title">' + icon + ' ' + book.title +
-      '</div><div class="lib-item-meta">' + wc.toLocaleString() + ' words · ~' + mins + ' min' + resumed +
+      '</div><div class="lib-item-meta">' + (wc > 0 ? wc.toLocaleString() + ' words · ' : '') + '~' + mins + ' min' + resumed + sourceLabel +
       '</div></div>' + (!isSystem ? '<div class="lib-item-del" data-del="' + book.id + '">✕</div>' : '');
 
-    el.querySelector('.lib-item-info').addEventListener('click', () => {
-      if (isSystem) loadText(book.text, book.id); else loadBook(book.id);
+    el.querySelector('.lib-item-info').addEventListener('click', async () => {
+      if (isCloud) {
+        // Lazy-load text from API
+        const text = await loadCloudBookText(book.id);
+        if (text) {
+          // Parse chapters from cloud book metadata
+          if (book.chapters && book.chapters.length > 0) {
+            currentChapters = book.chapters;
+          }
+          loadText(text, book.id);
+        } else {
+          alert('Could not load book text. Is Rabbit Command running?');
+        }
+      } else if (isSample || isBundled) {
+        loadText(book.text, book.id);
+      } else {
+        loadBook(book.id);
+      }
     });
 
     const delBtn = el.querySelector('.lib-item-del');
@@ -483,18 +588,16 @@ document.addEventListener('click', (e) => {
     case 'load-input':  { const t = $('#text-input').value; if (t.trim()) loadText(t); } break;
     case 'load-url':    loadFromURL(); break;
     case 'toggle-play': togglePlay(); break;
-    case 'step-back':   stepBack(); break;
-    case 'step-fwd':    stepForward(); break;
     case 'speed-up':    changeSpeed(WPM_STEP); break;
     case 'speed-down':  changeSpeed(-WPM_STEP); break;
     case 'prev-chapter': prevChapter(); break;
     case 'next-chapter': nextChapter(); break;
     case 'chapters':    stopReading(); buildChapterList(); showScreen('chapters-screen'); break;
     case 'restart':     restart(); break;
-    case 'browse-mode': openBrowseMode(); break;
     case 'browse-font-up':   changeBrowseFont(1); break;
     case 'browse-font-down': changeBrowseFont(-1); break;
     case 'exit-reader': stopReading(); showScreen('menu-screen'); break;
+    case 'sync-cloud':  syncCloudBooks(); break;
   }
 });
 
@@ -509,26 +612,53 @@ document.addEventListener('touchend', (e) => {
 // Tap word zone to play/pause
 $('#word-zone').addEventListener('click', togglePlay);
 
-// Scroll wheel → speed control (R1 wheel + desktop mouse)
+// ── Scroll wheel — context-aware ──
+// Paused: scroll up = seek back word-by-word, scroll down = seek forward
+// Playing: scroll up = speed up WPM, scroll down = slow down WPM
 document.addEventListener('wheel', (e) => {
-  e.preventDefault();
   const screen = document.querySelector('.screen.active');
-  if (screen && screen.id === 'browse-screen') {
-    // In browse mode, wheel scrolls text (default behavior handled by overflow)
-    return;
+  if (screen && screen.id === 'browse-screen') return; // let browse scroll naturally
+  e.preventDefault();
+  if (screen && screen.id !== 'reader-screen') return;
+
+  if (isPlaying) {
+    // Playing → adjust speed
+    if (e.deltaY < 0) changeSpeed(WPM_STEP);
+    else if (e.deltaY > 0) changeSpeed(-WPM_STEP);
+  } else {
+    // Paused → seek word by word
+    if (e.deltaY < 0) { wordIndex = Math.max(0, wordIndex - 1); updateDisplay(); }
+    else if (e.deltaY > 0) { wordIndex = Math.min(words.length - 1, wordIndex + 1); updateDisplay(); }
   }
-  if (e.deltaY < 0) changeSpeed(WPM_STEP);
-  else if (e.deltaY > 0) changeSpeed(-WPM_STEP);
 }, { passive: false });
 
-// Side button → toggle browse mode (R1 side button maps to various key events)
+// ── Side button — single click = play, double click = browse ──
+function handleSideButton() {
+  const screen = document.querySelector('.screen.active');
+  // If in browse mode, any press returns to reader
+  if (screen && screen.id === 'browse-screen') { showScreen('reader-screen'); return; }
+  if (screen && screen.id !== 'reader-screen') return;
+  _sideClickCount++;
+  if (_sideClickCount === 1) {
+    _sideClickTimer = setTimeout(() => {
+      // Single click → toggle play
+      if (_sideClickCount === 1) togglePlay();
+      _sideClickCount = 0;
+    }, DOUBLE_CLICK_MS);
+  } else if (_sideClickCount >= 2) {
+    // Double click → browse mode
+    clearTimeout(_sideClickTimer);
+    _sideClickCount = 0;
+    if (words.length > 0) openBrowseMode();
+  }
+}
+
 document.addEventListener('keydown', (e) => {
   const screen = document.querySelector('.screen.active');
-  // Map common R1 side-button keys + 'b' for desktop testing
+  // R1 side-button keys + 'b' for desktop testing
   if (e.key === 'b' || e.key === 'F1' || e.key === 'Camera' || e.key === 'MediaRecord') {
     e.preventDefault();
-    if (screen && screen.id === 'reader-screen' && words.length > 0) openBrowseMode();
-    else if (screen && screen.id === 'browse-screen') showScreen('reader-screen');
+    handleSideButton();
   }
   // Space = play/pause
   if (e.key === ' ' && screen && screen.id === 'reader-screen') {
@@ -536,5 +666,45 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// ── Init ──
-buildLibrary();
+// ── Landscape rotation detection (R1 accelerometer) ──
+if (window.DeviceOrientationEvent) {
+  window.addEventListener('deviceorientation', (e) => {
+    const gamma = e.gamma; // tilt left/right: -90 to 90
+    if (gamma === null) return;
+    if (Math.abs(gamma) > 45) {
+      document.body.classList.add('force-landscape');
+      document.body.classList.remove('force-portrait');
+    } else {
+      document.body.classList.add('force-portrait');
+      document.body.classList.remove('force-landscape');
+    }
+  });
+}
+
+// ── Init: auto-resume last book ──
+(async function init() {
+  buildLibrary();
+  syncCloudBooks();
+
+  const lastId = getLastBook();
+  if (!lastId) return;
+
+  // Check local books
+  const localBook = getBooks().find(b => b.id === lastId);
+  if (localBook) { loadBook(lastId); return; }
+
+  // Check samples
+  const sample = SAMPLES.find(s => s.id === lastId);
+  if (sample) { loadText(sample.text, sample.id); return; }
+
+  // Check bundled
+  const bundled = (typeof BUNDLED_BOOKS !== 'undefined') ? BUNDLED_BOOKS : [];
+  const bb = bundled.find(b => b.id === lastId);
+  if (bb) { loadText(bb.text, bb.id); return; }
+
+  // Check cloud (need to wait for sync)
+  try {
+    const text = await loadCloudBookText(lastId);
+    if (text) loadText(text, lastId);
+  } catch {}
+})();
