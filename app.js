@@ -209,10 +209,14 @@ function loadText(text, bookId) {
     setLastBook(bookId);
   }
 
-  updateDisplay();
   elState.textContent = 'TAP TO START';
   elPlay.textContent = '▶';
   showScreen('reader-screen');
+  
+  // Wait a frame for layout to complete so offsetWidth is accurate
+  requestAnimationFrame(() => {
+    updateDisplay();
+  });
 }
 
 function detectChapters() {
@@ -705,15 +709,17 @@ if (window.DeviceOrientationEvent) {
     // Will need a user gesture to request — skip for now, rely on fallback
   } else {
     window.addEventListener('deviceorientation', (e) => {
-      if (e.gamma === null) return;
+      if (e.gamma === null || e.beta === null) return;
       
       const absGamma = Math.abs(e.gamma);
+      const absBeta = Math.abs(e.beta);
 
-      // Trigger landscape at > 45 degrees, reset to portrait at < 25 degrees.
-      // Hysteresis prevents flickering.
-      if (!_isLandscape && absGamma > 45) {
+      // When the device is tilted back (e.g., holding a book at 45 degrees), 
+      // rotating it to landscape causes beta to decrease and gamma to increase.
+      // We trigger landscape when gamma exceeds beta, with a 10-degree hysteresis.
+      if (!_isLandscape && absGamma > absBeta + 10) {
         setLandscape(true);
-      } else if (_isLandscape && absGamma < 25) {
+      } else if (_isLandscape && absGamma < absBeta - 10) {
         setLandscape(false);
       }
     });

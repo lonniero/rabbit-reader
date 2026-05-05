@@ -157,7 +157,7 @@ body.force-portrait {
 #current-word {
   position:absolute; top:50%; transform:translateY(-50%);
   white-space:nowrap; min-height:36px;
-  font-size:28px; font-weight:700; letter-spacing:-.5px;
+  font-size:28px; font-weight:700;
   display:flex; align-items:center;
   /* left is set by JS to align ORP letter with center guide */
 }
