@@ -1,0 +1,26 @@
+{
+  "name": "rabbit-command",
+  "version": "1.0.0",
+  "description": "Discord bot — command center for Rabbit R1 mini-apps",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "node --watch bot.js"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "@notionhq/client": "^2.2.0",
+    "cors": "^2.8.5",
+    "discord.js": "^14.16.0",
+    "dotenv": "^16.4.0",
+    "epub2": "^3.0.2",
+    "express": "^4.21.0",
+    "html-to-text": "^10.0.0",
+    "jsdom": "^27.0.1",
+    "pdf-parse": "^1.1.1",
+    "rss-parser": "^3.13.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

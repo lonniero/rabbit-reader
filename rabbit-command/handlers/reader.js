@@ -6,9 +6,10 @@
 
 const { EmbedBuilder } = require('discord.js');
 const { parsePDF } = require('../services/pdf-parser');
+const { parseEPUB } = require('../services/epub-parser');
 const { addBook } = require('../services/notion');
 
-const SUPPORTED_EXTENSIONS = ['.pdf']; // EPUB support can be added later
+const SUPPORTED_EXTENSIONS = ['.pdf', '.epub'];
 
 /**
  * Handle a message in the #rabbit-reader channel.
@@ -31,6 +32,7 @@ async function handleReaderMessage(message) {
   for (const [, attachment] of attachments) {
     const fileName = attachment.name || 'unknown.pdf';
     const title = fileName.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+    const isEpub = fileName.toLowerCase().endsWith('.epub');
 
     // React to show we're processing
     await message.react('⏳');
@@ -41,8 +43,10 @@ async function handleReaderMessage(message) {
       if (!response.ok) throw new Error(`Download failed: HTTP ${response.status}`);
       const buffer = Buffer.from(await response.arrayBuffer());
 
-      // Parse PDF
-      const { text, wordCount, chapters } = await parsePDF(buffer);
+      // Parse document
+      const { text, wordCount, chapters } = isEpub
+        ? await parseEPUB(buffer)
+        : await parsePDF(buffer);
 
       if (!text || wordCount < 50) {
         await message.react('⚠️');

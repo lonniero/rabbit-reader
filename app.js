@@ -706,11 +706,13 @@ if (window.DeviceOrientationEvent) {
   } else {
     window.addEventListener('deviceorientation', (e) => {
       if (e.gamma === null) return;
-      // Use hysteresis to prevent flickering
+      // Use hysteresis to prevent flickering. 
+      // The user may not hold the device at a full 90 degrees.
+      // Trigger landscape at > 35 degrees, reset to portrait at < 15 degrees.
       const absGamma = Math.abs(e.gamma);
-      if (!_isLandscape && absGamma > 65) {
+      if (!_isLandscape && absGamma > 35) {
         setLandscape(true);
-      } else if (_isLandscape && absGamma < 25) {
+      } else if (_isLandscape && absGamma < 15) {
         setLandscape(false);
       }
     });
