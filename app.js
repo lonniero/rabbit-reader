@@ -591,10 +591,7 @@ document.addEventListener('touchend', (e) => {
 $('#word-zone').addEventListener('click', togglePlay);
 
 // ── Scroll handler logic (shared by R1 events + fallbacks) ──
-function handleScrollUp() {
-  const screen = document.querySelector('.screen.active');
-  if (screen && screen.id === 'browse-screen') return; // browse scrolls naturally
-  if (screen && screen.id !== 'reader-screen') return;
+function doScrollUp() {
   if (isPlaying) {
     changeSpeed(-WPM_STEP);
   } else {
@@ -602,14 +599,35 @@ function handleScrollUp() {
   }
 }
 
-function handleScrollDown() {
-  const screen = document.querySelector('.screen.active');
-  if (screen && screen.id === 'browse-screen') return;
-  if (screen && screen.id !== 'reader-screen') return;
+function doScrollDown() {
   if (isPlaying) {
     changeSpeed(WPM_STEP);
   } else {
     wordIndex = Math.max(0, wordIndex - 1); updateDisplay();
+  }
+}
+
+function handleScrollUp() {
+  const screen = document.querySelector('.screen.active');
+  if (screen && screen.id === 'browse-screen') return; // browse scrolls naturally
+  if (screen && screen.id !== 'reader-screen') return;
+  
+  if (typeof _orientation !== 'undefined' && _orientation === 'landscape-left') {
+    doScrollDown();
+  } else {
+    doScrollUp();
+  }
+}
+
+function handleScrollDown() {
+  const screen = document.querySelector('.screen.active');
+  if (screen && screen.id === 'browse-screen') return;
+  if (screen && screen.id !== 'reader-screen') return;
+  
+  if (typeof _orientation !== 'undefined' && _orientation === 'landscape-left') {
+    doScrollUp();
+  } else {
+    doScrollDown();
   }
 }
 
@@ -662,16 +680,19 @@ if (typeof PluginMessageHandler === 'undefined') {
 
 // ── Landscape rotation (R1 has no auto-rotate — must be coded) ──
 // Detect device tilt via accelerometer and rotate the UI with CSS transforms
-let _isLandscape = false;
+let _orientation = 'portrait'; // 'portrait', 'landscape-left', 'landscape-right'
 
-function setLandscape(landscape) {
-  if (landscape === _isLandscape) return;
-  _isLandscape = landscape;
-  if (landscape) {
+function setOrientation(orientation) {
+  if (orientation === _orientation) return;
+  _orientation = orientation;
+  
+  document.body.classList.remove('force-portrait', 'force-landscape', 'force-landscape-right');
+  
+  if (orientation === 'landscape-left') {
     document.body.classList.add('force-landscape');
-    document.body.classList.remove('force-portrait');
+  } else if (orientation === 'landscape-right') {
+    document.body.classList.add('force-landscape-right');
   } else {
-    document.body.classList.remove('force-landscape');
     document.body.classList.add('force-portrait');
   }
 }
@@ -688,13 +709,14 @@ if (window.DeviceOrientationEvent) {
       const absGamma = Math.abs(e.gamma);
       const absBeta = Math.abs(e.beta);
 
-      // When the device is tilted back (e.g., holding a book at 45 degrees), 
-      // rotating it to landscape causes beta to decrease and gamma to increase.
-      // We trigger landscape when gamma exceeds beta, with a 10-degree hysteresis.
-      if (!_isLandscape && absGamma > absBeta + 10) {
-        setLandscape(true);
-      } else if (_isLandscape && absGamma < absBeta - 10) {
-        setLandscape(false);
+      if (absGamma > absBeta + 10) {
+        if (e.gamma < 0) {
+          setOrientation('landscape-left');
+        } else {
+          setOrientation('landscape-right');
+        }
+      } else if (absGamma < absBeta - 10) {
+        setOrientation('portrait');
       }
     });
   }
@@ -704,7 +726,15 @@ if (window.DeviceOrientationEvent) {
 if (screen.orientation) {
   screen.orientation.addEventListener('change', () => {
     const type = screen.orientation.type;
-    setLandscape(type.includes('landscape'));
+    if (type.includes('landscape')) {
+      if (type.includes('secondary')) {
+        setOrientation('landscape-right');
+      } else {
+        setOrientation('landscape-left');
+      }
+    } else {
+      setOrientation('portrait');
+    }
   });
 }
 

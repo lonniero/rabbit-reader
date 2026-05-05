@@ -49,6 +49,17 @@ body.force-landscape .screen { width: 282px; height: 240px; }
 body.force-landscape .overlay { width: 282px; height: 240px; }
 body.force-landscape .progress-bar { width: calc(282px - 24px); }
 
+body.force-landscape-right {
+  width: 282px; height: 240px;
+  transform: rotate(-90deg);
+  transform-origin: top left;
+  position: absolute;
+  top: 282px; left: 0;
+}
+body.force-landscape-right .screen { width: 282px; height: 240px; }
+body.force-landscape-right .overlay { width: 282px; height: 240px; }
+body.force-landscape-right .progress-bar { width: calc(282px - 24px); }
+
 body.force-portrait {
   width: 240px; height: 282px;
   transform: none;
