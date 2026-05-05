@@ -612,59 +612,75 @@ document.addEventListener('touchend', (e) => {
 // Tap word zone to play/pause
 $('#word-zone').addEventListener('click', togglePlay);
 
-// ── Scroll wheel — context-aware ──
-// Paused: scroll up = seek back word-by-word, scroll down = seek forward
-// Playing: scroll up = speed up WPM, scroll down = slow down WPM
-document.addEventListener('wheel', (e) => {
+// ── Scroll handler logic (shared by R1 events + fallbacks) ──
+function handleScrollUp() {
   const screen = document.querySelector('.screen.active');
-  if (screen && screen.id === 'browse-screen') return; // let browse scroll naturally
-  e.preventDefault();
+  if (screen && screen.id === 'browse-screen') return; // browse scrolls naturally
   if (screen && screen.id !== 'reader-screen') return;
-
   if (isPlaying) {
-    // Playing → adjust speed
-    if (e.deltaY < 0) changeSpeed(WPM_STEP);
-    else if (e.deltaY > 0) changeSpeed(-WPM_STEP);
+    changeSpeed(WPM_STEP);
   } else {
-    // Paused → seek word by word
-    if (e.deltaY < 0) { wordIndex = Math.max(0, wordIndex - 1); updateDisplay(); }
-    else if (e.deltaY > 0) { wordIndex = Math.min(words.length - 1, wordIndex + 1); updateDisplay(); }
+    wordIndex = Math.max(0, wordIndex - 1); updateDisplay();
   }
-}, { passive: false });
+}
 
-// ── Side button — single click = play, double click = browse ──
+function handleScrollDown() {
+  const screen = document.querySelector('.screen.active');
+  if (screen && screen.id === 'browse-screen') return;
+  if (screen && screen.id !== 'reader-screen') return;
+  if (isPlaying) {
+    changeSpeed(-WPM_STEP);
+  } else {
+    wordIndex = Math.min(words.length - 1, wordIndex + 1); updateDisplay();
+  }
+}
+
+// ── Side button logic (single = play, double = browse) ──
 function handleSideButton() {
   const screen = document.querySelector('.screen.active');
-  // If in browse mode, any press returns to reader
   if (screen && screen.id === 'browse-screen') { showScreen('reader-screen'); return; }
   if (screen && screen.id !== 'reader-screen') return;
   _sideClickCount++;
   if (_sideClickCount === 1) {
     _sideClickTimer = setTimeout(() => {
-      // Single click → toggle play
       if (_sideClickCount === 1) togglePlay();
       _sideClickCount = 0;
     }, DOUBLE_CLICK_MS);
   } else if (_sideClickCount >= 2) {
-    // Double click → browse mode
     clearTimeout(_sideClickTimer);
     _sideClickCount = 0;
     if (words.length > 0) openBrowseMode();
   }
 }
 
-document.addEventListener('keydown', (e) => {
+// ── R1 Hardware: Native custom events from firmware ──
+window.addEventListener('scrollUp', handleScrollUp);
+window.addEventListener('scrollDown', handleScrollDown);
+window.addEventListener('sideClick', handleSideButton);
+
+// ── Fallback: standard wheel event (desktop / non-R1 browsers) ──
+document.addEventListener('wheel', (e) => {
   const screen = document.querySelector('.screen.active');
-  // R1 side-button keys + 'b' for desktop testing
-  if (e.key === 'b' || e.key === 'F1' || e.key === 'Camera' || e.key === 'MediaRecord') {
-    e.preventDefault();
-    handleSideButton();
-  }
-  // Space = play/pause
-  if (e.key === ' ' && screen && screen.id === 'reader-screen') {
-    e.preventDefault(); togglePlay();
-  }
-});
+  if (screen && screen.id === 'browse-screen') return;
+  e.preventDefault();
+  if (e.deltaY < 0) handleScrollUp();
+  else if (e.deltaY > 0) handleScrollDown();
+}, { passive: false });
+
+// ── Keyboard fallback (desktop testing when no R1 PluginMessageHandler) ──
+if (typeof PluginMessageHandler === 'undefined') {
+  document.addEventListener('keydown', (e) => {
+    switch (e.key) {
+      case 'ArrowUp':   e.preventDefault(); handleScrollUp(); break;
+      case 'ArrowDown': e.preventDefault(); handleScrollDown(); break;
+      case ' ':
+        e.preventDefault();
+        if (document.querySelector('.screen.active')?.id === 'reader-screen') togglePlay();
+        break;
+      case 'b': case 'B': e.preventDefault(); handleSideButton(); break;
+    }
+  });
+}
 
 // ── Landscape rotation detection (R1 accelerometer) ──
 if (window.DeviceOrientationEvent) {
