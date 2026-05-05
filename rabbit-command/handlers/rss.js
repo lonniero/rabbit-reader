@@ -46,7 +46,7 @@ async function handleRSSMessage(message) {
         // Not a direct RSS feed — try to discover one from the website
         const discovered = await discoverFeed(rawUrl);
         if (!discovered) {
-          await message.reactions.cache.get('⏳')?.remove();
+          await message.reactions.resolve('⏳')?.users.remove(message.client.user.id);
           await message.react('⚠️');
           await message.reply({
             embeds: [new EmbedBuilder()
@@ -63,7 +63,7 @@ async function handleRSSMessage(message) {
 
       // Check for duplicates
       if (await feedExists(feedUrl)) {
-        await message.reactions.cache.get('⏳')?.remove();
+        await message.reactions.resolve('⏳')?.users.remove(message.client.user.id);
         await message.react('🔄');
         await message.reply({
           embeds: [new EmbedBuilder()
@@ -87,7 +87,7 @@ async function handleRSSMessage(message) {
       });
 
       // Success
-      await message.reactions.cache.get('⏳')?.remove();
+      await message.reactions.resolve('⏳')?.users.remove(message.client.user.id);
       await message.react('📰');
 
       const embed = new EmbedBuilder()
@@ -110,7 +110,7 @@ async function handleRSSMessage(message) {
 
     } catch (err) {
       console.error(`[rss] Error processing ${rawUrl}:`, err);
-      await message.reactions.cache.get('⏳')?.remove();
+      await message.reactions.resolve('⏳')?.users.remove(message.client.user.id);
       await message.react('❌');
       await message.reply({
         embeds: [new EmbedBuilder()

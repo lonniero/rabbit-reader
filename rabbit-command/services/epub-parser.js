@@ -27,10 +27,18 @@ async function parseEPUB(buffer) {
     let fullText = '';
     const chapters = [];
     let currentWordIndex = 0;
+    const errors = [];
+    
+    if (!epub.flow || epub.flow.length === 0) {
+      errors.push('No flow/chapters found in EPUB structure');
+    }
     
     // epub.flow contains the reading order / chapters
-    for (const chapterRef of epub.flow) {
-      if (!chapterRef.id) continue;
+    for (const chapterRef of epub.flow || []) {
+      if (!chapterRef.id) {
+        errors.push('Chapter ref missing ID');
+        continue;
+      }
       
       try {
         const html = await epub.getChapterAsync(chapterRef.id);
@@ -64,11 +72,16 @@ async function parseEPUB(buffer) {
         currentWordIndex += addedWords;
         
       } catch (err) {
+        errors.push(`[${chapterRef.id}] ${err.message}`);
         console.error(`[epub] Failed to read chapter ${chapterRef.id}:`, err.message);
       }
     }
     
     const wordCount = currentWordIndex;
+    
+    if (wordCount === 0 && errors.length > 0) {
+      throw new Error(`EPUB Chapter Errors: ${errors.slice(0, 3).join(', ')}`);
+    }
     
     return { text: fullText.trim(), wordCount, chapters };
     

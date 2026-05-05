@@ -50,12 +50,13 @@ async function handleReaderMessage(message) {
 
       if (!text || wordCount < 50) {
         await message.react('⚠️');
+        const fileType = isEpub ? 'EPUB' : 'PDF';
         await message.reply({
           embeds: [new EmbedBuilder()
             .setColor(0xFF4444)
-            .setTitle('⚠️ Could not extract text')
-            .setDescription(`**${title}** — The PDF might be image-based or too short (${wordCount} words).`)
-            .setFooter({ text: 'Try a text-based PDF' })
+            .setTitle(`⚠️ Could not extract text`)
+            .setDescription(`**${title}** — The ${fileType} might be image-based, corrupted, or too short (${wordCount} words).`)
+            .setFooter({ text: `Try a text-based ${fileType}` })
           ],
         });
         return;
@@ -72,7 +73,7 @@ async function handleReaderMessage(message) {
       });
 
       // Remove processing reaction, add success
-      await message.reactions.cache.get('⏳')?.remove();
+      await message.reactions.resolve('⏳')?.users.remove(message.client.user.id);
       await message.react('📚');
 
       // Send rich confirmation
@@ -93,7 +94,7 @@ async function handleReaderMessage(message) {
 
     } catch (err) {
       console.error(`[reader] Error processing ${fileName}:`, err);
-      await message.reactions.cache.get('⏳')?.remove();
+      await message.reactions.resolve('⏳')?.users.remove(message.client.user.id);
       await message.react('❌');
       await message.reply({
         embeds: [new EmbedBuilder()
