@@ -618,9 +618,9 @@ function handleScrollUp() {
   if (screen && screen.id === 'browse-screen') return; // browse scrolls naturally
   if (screen && screen.id !== 'reader-screen') return;
   if (isPlaying) {
-    changeSpeed(WPM_STEP);
+    changeSpeed(-WPM_STEP);
   } else {
-    wordIndex = Math.max(0, wordIndex - 1); updateDisplay();
+    wordIndex = Math.min(words.length - 1, wordIndex + 1); updateDisplay();
   }
 }
 
@@ -629,9 +629,9 @@ function handleScrollDown() {
   if (screen && screen.id === 'browse-screen') return;
   if (screen && screen.id !== 'reader-screen') return;
   if (isPlaying) {
-    changeSpeed(-WPM_STEP);
+    changeSpeed(WPM_STEP);
   } else {
-    wordIndex = Math.min(words.length - 1, wordIndex + 1); updateDisplay();
+    wordIndex = Math.max(0, wordIndex - 1); updateDisplay();
   }
 }
 
@@ -706,8 +706,13 @@ if (window.DeviceOrientationEvent) {
   } else {
     window.addEventListener('deviceorientation', (e) => {
       if (e.gamma === null) return;
-      // gamma > 50 or < -50 means device is tilted sideways
-      setLandscape(Math.abs(e.gamma) > 50);
+      // Use hysteresis to prevent flickering
+      const absGamma = Math.abs(e.gamma);
+      if (!_isLandscape && absGamma > 65) {
+        setLandscape(true);
+      } else if (_isLandscape && absGamma < 25) {
+        setLandscape(false);
+      }
     });
   }
 }
