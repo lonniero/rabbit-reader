@@ -20,7 +20,7 @@ jobs:
         run: |
           mkdir -p _deploy
           # Copy only frontend files (not backend)
-          cp -r index.html app.js style.css books/ rss/ _deploy/ 2>/dev/null || true
+          cp -r index.html app.js style.css books/ rss/ transit-reader/ _deploy/ 2>/dev/null || true
           # Copy any other static assets
           cp -r *.png *.ico _deploy/ 2>/dev/null || true
       - uses: actions/configure-pages@v4
