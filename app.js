@@ -591,6 +591,27 @@ document.addEventListener('touchend', (e) => {
 $('#word-zone').addEventListener('click', togglePlay);
 
 // ── Scroll handler logic (shared by R1 events + fallbacks) ──
+
+// Robust orientation check — reads actual screen state each call,
+// so it works even if deviceorientation events never fire (R1 OS rotation).
+function getCurrentOrientation() {
+  // 1. Check body classes set by our JS
+  if (document.body.classList.contains('force-landscape')) return 'landscape-left';
+  if (document.body.classList.contains('force-landscape-right')) return 'landscape-right';
+
+  // 2. Check screen.orientation API (Android WebView usually supports this)
+  if (screen.orientation && screen.orientation.type) {
+    const type = screen.orientation.type;
+    if (type === 'landscape-secondary') return 'landscape-right';
+    if (type.includes('landscape'))      return 'landscape-left';
+  }
+
+  // 3. Fallback: check viewport aspect ratio
+  if (window.innerWidth > window.innerHeight) return 'landscape-left';
+
+  return 'portrait';
+}
+
 function doScrollUp() {
   if (isPlaying) {
     changeSpeed(-WPM_STEP);
@@ -608,26 +629,32 @@ function doScrollDown() {
 }
 
 function handleScrollUp() {
-  const screen = document.querySelector('.screen.active');
-  if (screen && screen.id === 'browse-screen') return; // browse scrolls naturally
-  if (screen && screen.id !== 'reader-screen') return;
-  
-  if (typeof _orientation !== 'undefined' && _orientation === 'landscape-left') {
-    doScrollDown();
+  const scr = document.querySelector('.screen.active');
+  if (scr && scr.id === 'browse-screen') return;
+  if (scr && scr.id !== 'reader-screen') return;
+
+  const ori = getCurrentOrientation();
+  if (ori === 'landscape-left') {
+    doScrollDown();   // inverted: scrollUp → backward
+  } else if (ori === 'landscape-right') {
+    doScrollUp();     // inverted opposite: scrollUp → forward
   } else {
-    doScrollUp();
+    doScrollUp();     // portrait: default
   }
 }
 
 function handleScrollDown() {
-  const screen = document.querySelector('.screen.active');
-  if (screen && screen.id === 'browse-screen') return;
-  if (screen && screen.id !== 'reader-screen') return;
-  
-  if (typeof _orientation !== 'undefined' && _orientation === 'landscape-left') {
-    doScrollUp();
+  const scr = document.querySelector('.screen.active');
+  if (scr && scr.id === 'browse-screen') return;
+  if (scr && scr.id !== 'reader-screen') return;
+
+  const ori = getCurrentOrientation();
+  if (ori === 'landscape-left') {
+    doScrollUp();     // inverted: scrollDown → forward
+  } else if (ori === 'landscape-right') {
+    doScrollDown();   // inverted opposite: scrollDown → backward
   } else {
-    doScrollDown();
+    doScrollDown();   // portrait: default
   }
 }
 
