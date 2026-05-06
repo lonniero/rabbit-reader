@@ -1,7 +1,7 @@
 import {
     lonToXY, lonToSign,
-    PLANET_SYMBOLS, ASPECT_COLORS,
-    SIGN_SYMBOLS, SIGN_NAMES,
+    PLANET_SYMBOLS, PLANET_COLORS, ASPECT_COLORS,
+    SIGN_SYMBOLS, SIGN_NAMES, SIGN_COLORS,
     BG, STROKE
 } from './chartHelpers.js';
 
