@@ -199,6 +199,13 @@ body.force-portrait {
 .ctrl-btn.small { width:auto; padding:0 6px; font-size:7px; height:16px; letter-spacing:.3px; color:var(--text-muted); }
 .ctrl-btn.small:active { border-color:var(--accent); color:var(--accent); }
 
+.book-title-bar {
+  width:100%; padding:2px 10px 3px; text-align:center;
+  font-size:6.5px; color:var(--text-muted); letter-spacing:.4px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  opacity:.6;
+}
+
 /* ═══ Browse Mode ═══ */
 #browse-screen { padding:0; gap:0; }
 .browse-top {

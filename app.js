@@ -27,6 +27,7 @@ let wpm = 300;
 let isPlaying = false;
 let timer = null;
 let currentBookId = null;
+let currentBookTitle = '';
 let currentChapters = [];
 let browseFontSize = 10;
 
@@ -190,6 +191,7 @@ function loadText(text, bookId) {
   words = text.trim().split(/\s+/).filter(w => w.length > 0);
   wordIndex = 0;
   currentBookId = bookId || null;
+  currentBookTitle = resolveBookTitle(bookId);
   currentChapters = [];
   isPlaying = false;
   clearTimeout(timer);
@@ -269,11 +271,39 @@ function renderWord(word) {
   elWord.style.left = (zoneW / 2 - preW - orpW / 2) + 'px';
 }
 
+function resolveBookTitle(bookId) {
+  if (!bookId) return '';
+  const userBooks = getBooks();
+  const ub = userBooks.find(b => b.id === bookId);
+  if (ub) return ub.title || '';
+  const sample = SAMPLES.find(s => s.id === bookId);
+  if (sample) return sample.title || '';
+  const bundled = (typeof BUNDLED_BOOKS !== 'undefined') ? BUNDLED_BOOKS : [];
+  const bb = bundled.find(b => b.id === bookId);
+  if (bb) return bb.title || '';
+  const cb = cloudBooks.find(b => b.id === bookId);
+  if (cb) return cb.title || '';
+  return '';
+}
+
+function updateBookTitleBar() {
+  const bar = document.getElementById('book-title-bar');
+  if (!bar) return;
+  if (!currentBookTitle) { bar.textContent = ''; return; }
+  let label = currentBookTitle.toUpperCase();
+  if (currentChapters.length > 0) {
+    const chIdx = getCurrentChapterIndex();
+    if (chIdx >= 0) label += '  ·  ' + currentChapters[chIdx].title;
+  }
+  bar.textContent = label;
+}
+
 function updateDisplay() {
   renderWord(words[wordIndex] || '');
   elWpm.textContent = wpm + ' WPM';
   elCount.textContent = (wordIndex + 1) + ' / ' + words.length;
   elProgress.style.width = (words.length > 0 ? ((wordIndex + 1) / words.length) * 100 : 0) + '%';
+  updateBookTitleBar();
 }
 
 // ── Playback ──
