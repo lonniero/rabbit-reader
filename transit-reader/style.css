@@ -74,29 +74,70 @@ body {
   flex-direction: column;
 }
 
-/* LIST VIEW */
+/* CURRENT PLANETS TABLE */
 .list-view {
   padding: 16px;
+  overflow-y: auto;
+  height: 100%;
 }
-
-.transit-item {
-  background: #2a2a2a;
-  margin-bottom: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  border-left: 4px solid var(--accent);
+.cp-header {
+  text-align: center;
+  margin-bottom: 24px;
 }
-
-.transit-header {
-  display: flex;
-  justify-content: space-between;
+.cp-title {
+  font-size: 1.2rem;
   font-weight: 900;
-  margin-bottom: 4px;
+  color: #fff;
 }
-
-.transit-details {
+.cp-subtitle {
   font-size: 0.85rem;
   color: #aaa;
+  margin-top: 4px;
+}
+.cp-table {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.cp-row {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px 32px 70px 50px;
+  align-items: center;
+  font-family: monospace;
+  font-size: 1rem;
+  padding: 4px 8px;
+  border-bottom: 1px solid #333;
+}
+.cp-row:last-child {
+  border-bottom: none;
+}
+.cp-glyph {
+  font-size: 1.4rem;
+  text-align: center;
+}
+.cp-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  padding-left: 8px;
+}
+.cp-deg {
+  text-align: right;
+  padding-right: 4px;
+}
+.cp-sign {
+  font-size: 1.4rem;
+  text-align: center;
+}
+.cp-minsec {
+  text-align: left;
+  padding-left: 8px;
+}
+.cp-lat {
+  text-align: right;
+  color: #aaa;
+  font-size: 0.9rem;
 }
 
 /* CHART VIEWS */

@@ -66,27 +66,59 @@ function renderAll() {
 }
 
 function renderList() {
-  const { transits } = appData.transits; // Transit planets
-  const aspects = appData.transits.aspects.slice(0, 15); // Top 15 aspects
+  const transits = appData.transits.transits; // Array of transit planets
   
-  let html = '';
-  aspects.forEach(a => {
+  const now = new Date();
+  const dateOpts = { day: 'numeric', month: 'short', year: 'numeric' };
+  const timeOpts = { hour: '2-digit', minute: '2-digit', hour12: false };
+  const dateStr = now.toLocaleDateString('en-GB', dateOpts);
+  const timeStr = now.toLocaleTimeString('en-GB', timeOpts);
+
+  let html = `
+    <div class="cp-header">
+      <div class="cp-title">Current Planets</div>
+      <div class="cp-subtitle">${dateStr}, ${timeStr} Local</div>
+    </div>
+    <div class="cp-table">
+  `;
+
+  transits.forEach(p => {
+    // Format latitude
+    const latDeg = Math.floor(Math.abs(p.latitude));
+    const latMin = Math.floor((Math.abs(p.latitude) - latDeg) * 60);
+    const latDir = p.latitude >= 0 ? 'n' : 's';
+    const latStr = `${latDeg}${latDir}${latMin.toString().padStart(2, '0')}`;
+
+    // Format retrograde
+    const retroStr = p.retrograde ? 'r' : '';
+    const minSecStr = `${p.minute}'${p.second.toString().padStart(2, '0')}"${retroStr}`;
+    
+    // Astrodienst-like sign colors
+    const signColor = getSignColor(p.signIndex);
+
     html += `
-      <div class="transit-item">
-        <div class="transit-header">
-          <span>${a.transitSymbol} ${a.transitPlanet}</span>
-          <span>${a.aspectSymbol} ${a.aspect}</span>
-          <span>${a.natalSymbol} ${a.natalPlanet} (Natal)</span>
-        </div>
-        <div class="transit-details">
-          Orb: ${a.orb}° | Exactness: ${a.exactness}% | Nature: ${a.nature}
-        </div>
+      <div class="cp-row">
+        <div class="cp-glyph">${p.symbol}</div>
+        <div class="cp-name">${p.name}</div>
+        <div class="cp-deg">${p.degree}</div>
+        <div class="cp-sign" style="color: ${signColor};">${p.signSymbol}</div>
+        <div class="cp-minsec">${minSecStr}</div>
+        <div class="cp-lat">${latStr}</div>
       </div>
     `;
   });
   
-  if (!html) html = '<div style="padding:20px;text-align:center;">No significant transits right now.</div>';
+  html += `</div>`;
   els.listContent.innerHTML = html;
+}
+
+function getSignColor(index) {
+  const element = index % 4;
+  if (element === 0) return '#ef4444'; // Fire (Aries, Leo, Sag) -> Red
+  if (element === 1) return '#22c55e'; // Earth (Taurus, Virgo, Cap) -> Green
+  if (element === 2) return '#f59e0b'; // Air (Gemini, Libra, Aq) -> Orange
+  if (element === 3) return '#3b82f6'; // Water (Cancer, Scorpio, Pisces) -> Blue
+  return '#fff';
 }
 
 function renderMandala() {
