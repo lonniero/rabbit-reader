@@ -1,19 +1,19 @@
-export const SIGN_SYMBOLS = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+export const SIGN_SYMBOLS = ['♈\uFE0E', '♉\uFE0E', '♊\uFE0E', '♋\uFE0E', '♌\uFE0E', '♍\uFE0E', '♎\uFE0E', '♏\uFE0E', '♐\uFE0E', '♑\uFE0E', '♒\uFE0E', '♓\uFE0E'];
 export const SIGN_NAMES = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
 
 export const SIGN_COLORS = [
     '#E11515', // Aries (Fire - Red)
-    '#8B6508', // Taurus (Earth - Brown)
-    '#008B8B', // Gemini (Air - Teal)
-    '#0000CD', // Cancer (Water - Blue)
-    '#E11515', // Leo (Fire - Red)
-    '#8B6508', // Virgo (Earth - Brown)
-    '#008B8B', // Libra (Air - Teal)
-    '#0000CD', // Scorpio (Water - Blue)
-    '#E11515', // Sagittarius (Fire - Red)
-    '#8B6508', // Capricorn (Earth - Brown)
-    '#008B8B', // Aquarius (Air - Teal)
-    '#0000CD'  // Pisces (Water - Blue)
+    '#22c55e', // Taurus (Earth - Green)
+    '#f59e0b', // Gemini (Air - Orange/Yellow)
+    '#3b82f6', // Cancer (Water - Blue)
+    '#E11515', // Leo (Fire)
+    '#22c55e', // Virgo (Earth)
+    '#f59e0b', // Libra (Air)
+    '#3b82f6', // Scorpio (Water)
+    '#E11515', // Sagittarius (Fire)
+    '#22c55e', // Capricorn (Earth)
+    '#f59e0b', // Aquarius (Air)
+    '#3b82f6'  // Pisces (Water)
 ];
 
 export const PLANET_COLORS = {
@@ -24,9 +24,9 @@ export const PLANET_COLORS = {
 };
 
 export const PLANET_SYMBOLS = {
-    'Sun': '☉', 'Moon': '☽', 'Mercury': '☿', 'Venus': '♀', 'Mars': '♂',
-    'Jupiter': '♃', 'Saturn': '♄', 'Uranus': '♅', 'Neptune': '♆', 'Pluto': '♇',
-    'North Node': '☊', 'South Node': '☋', 'Chiron': '⚷', 'Fortune': '⊗'
+    'Sun': '☉\uFE0E', 'Moon': '☽\uFE0E', 'Mercury': '☿\uFE0E', 'Venus': '♀\uFE0E', 'Mars': '♂\uFE0E',
+    'Jupiter': '♃\uFE0E', 'Saturn': '♄\uFE0E', 'Uranus': '♅\uFE0E', 'Neptune': '♆\uFE0E', 'Pluto': '♇\uFE0E',
+    'North Node': '☊\uFE0E', 'South Node': '☋\uFE0E', 'Chiron': '⚷\uFE0E', 'Fortune': '⊗\uFE0E'
 };
 
 export const ASPECT_COLORS = {
