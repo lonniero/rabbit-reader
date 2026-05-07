@@ -123,6 +123,7 @@ function getSignColor(index) {
   return '#fff';
 }
 
+let mandalaPanzoom = null;
 function renderMandala() {
   // For the transit mandala, we treat transits as the natal chart
   // so they are drawn on the inner ring. We pass no transits data.
@@ -132,12 +133,19 @@ function renderMandala() {
   };
   const svg = generateChartSVG(chartData, null);
   els.mandalaChart.innerHTML = svg;
+  
+  if (mandalaPanzoom) mandalaPanzoom.destroy();
+  mandalaPanzoom = Panzoom(els.mandalaChart.querySelector('svg'), { maxScale: 5 });
 }
 
+let combinedPanzoom = null;
 function renderCombined() {
   // For combined, natal chart is inner, transits are outer
   const svg = generateChartSVG(appData.natal, appData.transits);
   els.combinedChart.innerHTML = svg;
+  
+  if (combinedPanzoom) combinedPanzoom.destroy();
+  combinedPanzoom = Panzoom(els.combinedChart.querySelector('svg'), { maxScale: 5 });
 }
 
 // Navigation
@@ -150,6 +158,20 @@ window.switchView = function(viewId) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(viewId).classList.add('active');
 }
+
+// Hardware Scroll / Arrow Keys for Rabbit R1
+document.addEventListener('keydown', (e) => {
+  if (!document.getElementById('view-list').classList.contains('active')) return;
+  const content = document.querySelector('.content');
+  const scrollAmt = 80;
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    content.scrollBy({ top: -scrollAmt, behavior: 'smooth' });
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    content.scrollBy({ top: scrollAmt, behavior: 'smooth' });
+  }
+});
 
 // Start
 init();
