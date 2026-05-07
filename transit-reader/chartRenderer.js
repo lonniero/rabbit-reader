@@ -62,8 +62,15 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
     const transits = transitData?.transits || [];
     const aspects = transitData?.aspects || natalChart.aspects || [];
 
+    const isBiWheel = transits.length > 0;
+
+    // Dynamic viewBox based on chart bounds
+    const maxRadius = isBiWheel ? 465 : 340;
+    const vMin = cx - maxRadius;
+    const vSize = maxRadius * 2;
+    
     // Background
-    let svg = `<svg viewBox="-20 -20 ${S + 40} ${S + 40}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;background-color:${BG};">`;
+    let svg = `<svg viewBox="${vMin} ${vMin} ${vSize} ${vSize}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;background-color:${BG};">`;
 
     // Rings (inside → outside)
     svg += `<circle cx="${cx}" cy="${cy}" r="${R_ASPECTS}" fill="none" stroke="${K}" stroke-width="1.5"/>`;
@@ -158,7 +165,6 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
     }
 
     // Natal Planets (Main Chart)
-    const isBiWheel = transits.length > 0;
     const natalItems = layoutGlyphs(natal, 10);
     for (const p of natalItems) {
         const pColor = PLANET_COLORS[p.name] || K;

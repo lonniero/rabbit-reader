@@ -125,9 +125,13 @@ body {
   color: #d1d5db;
   font-weight: 500;
   font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .cp-deg {
   color: #9ca3af;
+  white-space: nowrap;
 }
 .cp-sign {
   font-size: 1.5rem;

@@ -1,6 +1,6 @@
-import { calcTransits } from './api.js?v=21';
-import { generateChartSVG } from './chartRenderer.js?v=21';
-import { lonToSign } from './chartHelpers.js?v=21';
+import { calcTransits } from './api.js?v=22';
+import { generateChartSVG } from './chartRenderer.js?v=22';
+import { lonToSign } from './chartHelpers.js?v=22';
 
 let appData = null;
 
@@ -90,8 +90,8 @@ function renderList() {
     const latStr = `${latDeg}${latDir}${latMin.toString().padStart(2, '0')}`;
 
     // Format retrograde
-    const retroStr = p.retrograde ? 'r' : '';
-    const minSecStr = `${p.minute}'${p.second.toString().padStart(2, '0')}"${retroStr}`;
+    const retroStr = p.retrograde ? ' <span style="font-size:0.8rem;color:#d946ef">Rx</span>' : '';
+    const minSecStr = `${p.minute.toString().padStart(2, '0')}'${retroStr}`;
     
     // Astrodienst-like sign colors
     const signColor = getSignColor(p.signIndex);
