@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
   <title>Rabbit Reader</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link rel="manifest" href="manifest.json">
+  <script src="lib/pdf.min.js"></script>
+  <script src="lib/jszip.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -83,5 +84,14 @@
 
   <script src="books.js"></script>
   <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Rabbit Reader: Offline Mode Ready'))
+          .catch(err => console.log('Offline Setup Failed:', err));
+      });
+    }
+  </script>
 </body>
 </html>
