@@ -60,19 +60,16 @@ function layoutGlyphs(planets, minSepDeg) {
 export function generateChartSVG(natalChart, transitData, highlight = null) {
     if (!natalChart) return '';
 
-    const S = 960, cx = 480, cy = 480;
-    const K = STROKE;
-
     // Layout (inside → outside):
-    //   Aspect ring → narrow house band → wider zodiac band → natal planets
+    //   Aspect ring → wider zodiac band → narrow house band → natal planets
     const R_ASPECTS     = 140;  // aspect lines touch here
-    const R_HOUSE_INNER = 140;  // same as R_ASPECTS
-    const R_HOUSE_OUTER = 205;  // narrow house band (~65px)
-    const R_ZODIAC_INNER = 205; // zodiac band starts here
-    const R_ZODIAC_OUTER = 305; // zodiac band outer rim (100px wide)
+    const R_ZODIAC_INNER = 140; // zodiac band starts here (same as aspects)
+    const R_ZODIAC_OUTER = 265; // zodiac band outer rim (125px wide)
+    const R_HOUSE_INNER = 265;  // narrow house band starts here
+    const R_HOUSE_OUTER = 280;  // narrow house band (15px wide)
 
-    // Natal planets are placed outside the zodiac ring
-    const R_NATAL_PLANETS = 355;
+    // Natal planets are placed outside the house ring
+    const R_NATAL_PLANETS = 330;
 
     // Transit planets are placed in an even wider concentric circle
     const R_TRANSITS_INNER = 410;
@@ -89,10 +86,10 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
 
     // Rings (inside → outside)
     svg += `<circle cx="${cx}" cy="${cy}" r="${R_ASPECTS}" fill="none" stroke="${K}" stroke-width="1.5"/>`;
-    svg += `<circle cx="${cx}" cy="${cy}" r="${R_HOUSE_OUTER}" fill="none" stroke="${K}" stroke-width="2"/>`;
     svg += `<circle cx="${cx}" cy="${cy}" r="${R_ZODIAC_OUTER}" fill="none" stroke="${K}" stroke-width="2"/>`;
+    svg += `<circle cx="${cx}" cy="${cy}" r="${R_HOUSE_OUTER}" fill="none" stroke="${K}" stroke-width="2"/>`;
 
-    // Degree ticks: originate from R_ZODIAC_OUTER (outer rim), point INWARD into zodiac band
+    // Degree ticks: originate from R_ZODIAC_INNER (inner rim), point OUTWARD into zodiac band
     for (let deg = 0; deg < 360; deg++) {
         const isMajor = deg % 30 === 0;
         const isTen = deg % 10 === 0;
@@ -100,8 +97,8 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
         if (isMajor) continue;
 
         const tickLen = isTen ? 14 : (isFive ? 9 : 4);
-        const p1 = lonToXY(deg, R_ZODIAC_OUTER, cx, cy, asc);
-        const p2 = lonToXY(deg, R_ZODIAC_OUTER - tickLen, cx, cy, asc);
+        const p1 = lonToXY(deg, R_ZODIAC_INNER, cx, cy, asc);
+        const p2 = lonToXY(deg, R_ZODIAC_INNER + tickLen, cx, cy, asc);
         svg += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${K}" stroke-width="${isFive ? 1.5 : 0.5}" opacity="0.8"/>`;
     }
 
@@ -122,11 +119,11 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
 
     // Houses
     if (houses) {
-        // House cusp lines span from R_HOUSE_OUTER down to R_ASPECTS (house band only)
+        // House cusp lines span from R_HOUSE_INNER to R_HOUSE_OUTER (house band only)
         houses.cusps.forEach(c => {
             const isAng = [1, 4, 7, 10].includes(c.house);
-            const p1 = lonToXY(c.longitude, R_HOUSE_OUTER, cx, cy, asc);
-            const p2 = lonToXY(c.longitude, R_ASPECTS, cx, cy, asc);
+            const p1 = lonToXY(c.longitude, R_HOUSE_INNER, cx, cy, asc);
+            const p2 = lonToXY(c.longitude, R_HOUSE_OUTER, cx, cy, asc);
             svg += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${K}" stroke-width="${isAng ? 2 : 0.8}" opacity="${isAng ? 1 : 0.6}"/>`;
         });
 
@@ -135,7 +132,7 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
             const next = houses.cusps[(i + 1) % 12];
             let midLon = c.longitude + ((((next.longitude - c.longitude) + 360) % 360) / 2);
             const p = lonToXY(midLon, (R_HOUSE_INNER + R_HOUSE_OUTER) / 2, cx, cy, asc);
-            svg += `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" fill="${K}" font-size="14" font-weight="bold" opacity="0.75" font-family="'Inter',sans-serif">${c.house}</text>`;
+            svg += `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" fill="${K}" font-size="10" font-weight="bold" opacity="0.75" font-family="'Inter',sans-serif">${c.house}</text>`;
         });
 
         // AC / DC / MC / IC Labels
@@ -146,11 +143,11 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
             { l: (houses.midheaven.longitude + 180) % 360, t: 'IC' }
         ];
         for (const { l, t } of labels) {
-            const p = lonToXY(l, R_ZODIAC_OUTER + 30, cx, cy, asc);
+            const p = lonToXY(l, R_HOUSE_OUTER + 30, cx, cy, asc);
             svg += `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" fill="${K}" font-size="22" font-family="serif" font-weight="bold">${t}</text>`;
-            // Arrow pointing to cusp at R_ZODIAC_OUTER
-            const pArr = lonToXY(l, R_ZODIAC_OUTER + 14, cx, cy, asc);
-            const pTip = lonToXY(l, R_ZODIAC_OUTER, cx, cy, asc);
+            // Arrow pointing to cusp at R_HOUSE_OUTER
+            const pArr = lonToXY(l, R_HOUSE_OUTER + 14, cx, cy, asc);
+            const pTip = lonToXY(l, R_HOUSE_OUTER, cx, cy, asc);
             svg += `<line x1="${p.x}" y1="${p.y}" x2="${pArr.x}" y2="${pArr.y}" stroke="${K}" stroke-width="2"/>`;
             const angle = Math.atan2(pTip.y - pArr.y, pTip.x - pArr.x);
             const a1 = angle - Math.PI / 6;
@@ -197,12 +194,12 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
         const sym = PLANET_SYMBOLS[p.name] || p.name.substring(0,2);
         const info = lonToSign(p.longitude);
 
-        // Stem from outer zodiac rim to glyph
-        const pZodiacOuter = lonToXY(p.longitude, R_ZODIAC_OUTER, cx, cy, asc);
+        // Stem from outer house rim to glyph
+        const pHouseOuter = lonToXY(p.longitude, R_HOUSE_OUTER, cx, cy, asc);
         const pGlyphEdge = lonToXY(p.drawLon, R_NATAL_PLANETS - 16, cx, cy, asc);
         const pGlyph = lonToXY(p.drawLon, R_NATAL_PLANETS, cx, cy, asc);
 
-        svg += `<line x1="${pZodiacOuter.x}" y1="${pZodiacOuter.y}" x2="${pGlyphEdge.x}" y2="${pGlyphEdge.y}" stroke="${pColor}" stroke-width="1"/>`;
+        svg += `<line x1="${pHouseOuter.x}" y1="${pHouseOuter.y}" x2="${pGlyphEdge.x}" y2="${pGlyphEdge.y}" stroke="${pColor}" stroke-width="1"/>`;
 
         // Planet degree text
         const degStr = `${info.deg}°`;

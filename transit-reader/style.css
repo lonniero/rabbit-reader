@@ -88,12 +88,12 @@ body {
   flex-shrink: 0;
 }
 .cp-title {
-  font-size: 1.8rem;
+  font-size: 1.2rem;
   font-weight: 900;
   color: #fff;
 }
 .cp-subtitle {
-  font-size: 1.1rem;
+  font-size: 0.8rem;
   color: #aaa;
   margin-top: 4px;
 }
@@ -107,11 +107,11 @@ body {
 }
 .cp-row {
   display: grid;
-  grid-template-columns: 60px 1fr 60px 60px 140px 90px;
+  grid-template-columns: 30px 1fr 30px 30px 70px 45px;
   align-items: center;
   font-family: monospace;
-  font-size: 1.6rem;
-  padding: 0 16px;
+  font-size: 0.9rem;
+  padding: 0 8px;
   border-bottom: 1px solid #333;
   flex: 1;
 }
@@ -119,12 +119,12 @@ body {
   border-bottom: none;
 }
 .cp-glyph {
-  font-size: 2.2rem;
+  font-size: 1.2rem;
   text-align: center;
 }
 .cp-name {
   font-family: 'Inter', sans-serif;
-  font-size: 1.8rem;
+  font-size: 1rem;
   padding-left: 8px;
   font-weight: 600;
 }
@@ -133,7 +133,7 @@ body {
   padding-right: 4px;
 }
 .cp-sign {
-  font-size: 2.2rem;
+  font-size: 1.2rem;
   text-align: center;
 }
 .cp-minsec {
@@ -143,7 +143,7 @@ body {
 .cp-lat {
   text-align: right;
   color: #aaa;
-  font-size: 1.3rem;
+  font-size: 0.8rem;
 }
 
 /* CHART VIEWS */
