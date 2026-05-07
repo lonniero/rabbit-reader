@@ -117,7 +117,7 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
         // Zodiac symbols centered in the band, biased toward inner (away from outer ticks)
         const mid = lonToXY(sL + 15, R_ZODIAC_INNER + (R_ZODIAC_OUTER - R_ZODIAC_INNER) * 0.41, cx, cy, asc);
         const signColor = SIGN_COLORS ? SIGN_COLORS[i] : K;
-        svg += `<text x="${mid.x}" y="${mid.y}" text-anchor="middle" dominant-baseline="central" fill="${signColor}" font-size="30" font-family="serif" font-weight="bold">${SIGN_SYMBOLS[i]}</text>`;
+        svg += `<text x="${mid.x}" y="${mid.y}" text-anchor="middle" dominant-baseline="central" fill="${signColor}" font-size="42" font-family="serif" font-weight="bold">${SIGN_SYMBOLS[i]}</text>`;
     }
 
     // Houses
