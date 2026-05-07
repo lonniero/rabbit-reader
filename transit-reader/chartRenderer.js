@@ -146,18 +146,8 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
             { l: (houses.midheaven.longitude + 180) % 360, t: 'IC' }
         ];
         for (const { l, t } of labels) {
-            const p = lonToXY(l, R_HOUSE_OUTER + 30, cx, cy, asc);
+            const p = lonToXY(l, R_HOUSE_OUTER + 25, cx, cy, asc);
             svg += `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" fill="${K}" font-size="22" font-family="serif" font-weight="bold">${t}</text>`;
-            // Arrow pointing to cusp at R_HOUSE_OUTER
-            const pArr = lonToXY(l, R_HOUSE_OUTER + 14, cx, cy, asc);
-            const pTip = lonToXY(l, R_HOUSE_OUTER, cx, cy, asc);
-            svg += `<line x1="${p.x}" y1="${p.y}" x2="${pArr.x}" y2="${pArr.y}" stroke="${K}" stroke-width="2"/>`;
-            const angle = Math.atan2(pTip.y - pArr.y, pTip.x - pArr.x);
-            const a1 = angle - Math.PI / 6;
-            const a2 = angle + Math.PI / 6;
-            const headLen = 8;
-            svg += `<line x1="${pTip.x}" y1="${pTip.y}" x2="${pTip.x - headLen * Math.cos(a1)}" y2="${pTip.y - headLen * Math.sin(a1)}" stroke="${K}" stroke-width="2"/>`;
-            svg += `<line x1="${pTip.x}" y1="${pTip.y}" x2="${pTip.x - headLen * Math.cos(a2)}" y2="${pTip.y - headLen * Math.sin(a2)}" stroke="${K}" stroke-width="2"/>`;
         }
     }
 
@@ -215,7 +205,7 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
         svg += `<text x="${pGlyph.x + dx}" y="${pGlyph.y + 8}" text-anchor="${txtAnchor}" dominant-baseline="central" fill="${pColor}" font-size="10" font-weight="normal" font-family="'Inter',sans-serif">${minStr}</text>`;
 
         // Glyph
-        svg += `<text x="${pGlyph.x}" y="${pGlyph.y}" text-anchor="middle" dominant-baseline="central" fill="${pColor}" font-size="32" font-family="serif" font-weight="bold">${sym}</text>`;
+        svg += `<text x="${pGlyph.x}" y="${pGlyph.y}" text-anchor="middle" dominant-baseline="central" fill="${pColor}" font-size="40" font-family="serif" font-weight="bold">${sym}</text>`;
         
         if (p.retrograde) {
             svg += `<text x="${pGlyph.x + 16}" y="${pGlyph.y + 14}" fill="${pColor}" font-size="10" font-weight="900" opacity="0.8">Rx</text>`;
@@ -248,7 +238,7 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
             svg += `<text x="${pGlyph.x + dx}" y="${pGlyph.y - 8}" text-anchor="${txtAnchor}" dominant-baseline="central" fill="${pColor}" font-size="14" font-weight="bold" font-family="'Inter',sans-serif">${degStr}</text>`;
             svg += `<text x="${pGlyph.x + dx}" y="${pGlyph.y + 8}" text-anchor="${txtAnchor}" dominant-baseline="central" fill="${pColor}" font-size="12" font-weight="normal" font-family="'Inter',sans-serif">${minStr}</text>`;
 
-            svg += `<text x="${pGlyph.x}" y="${pGlyph.y}" text-anchor="middle" dominant-baseline="central" fill="${pColor}" font-size="34" font-family="serif" font-weight="bold">${sym}</text>`;
+            svg += `<text x="${pGlyph.x}" y="${pGlyph.y}" text-anchor="middle" dominant-baseline="central" fill="${pColor}" font-size="42" font-family="serif" font-weight="bold">${sym}</text>`;
             
             if (p.retrograde) {
                 svg += `<text x="${pGlyph.x + 18}" y="${pGlyph.y + 16}" fill="${pColor}" font-size="12" font-weight="900" opacity="0.8">Rx</text>`;
