@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Astro Chart</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+
+        :root {
+            --bg-color: #0B0E14;
+            --ring-bg: rgba(255, 255, 255, 0.03);
+            --ring-border: rgba(255, 255, 255, 0.1);
+            --text-main: #E2E8F0;
+            
+            /* Zodiac Element Colors */
+            --fire: rgba(239, 68, 68, 0.8);
+            --earth: rgba(34, 197, 94, 0.8);
+            --air: rgba(234, 179, 8, 0.8);
+            --water: rgba(56, 189, 248, 0.8);
+
+            /* Aspect Colors */
+            --trine: rgba(56, 189, 248, 0.6);
+            --square: rgba(239, 68, 68, 0.6);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(239, 68, 68, 0.05), transparent 25%);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-main);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: var(--ring-bg);
+            box-shadow: 
+                0 0 40px rgba(0, 0, 0, 0.5),
+                inset 0 0 20px rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--ring-border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg); /* Start Aries at the left/Ascendant position */
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+        }
+
+        .zodiac-slice {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .zodiac-slice:hover {
+            opacity: 0.8;
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+
+        .planet {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .planet:hover {
+            transform: scale(1.5);
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.8));
+        }
+
+        .aspect-line {
+            transition: all 0.3s ease;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 0;
+            animation: drawLine 2s ease forwards;
+        }
+
+        @keyframes drawLine {
+            from { stroke-dashoffset: 1000; }
+            to { stroke-dashoffset: 0; }
+        }
+
+        /* Decorative Center */
+        .center-glow {
+            fill: url(#centerGlow);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="chart-container">
+        <svg viewBox="0 0 500 500" id="astro-chart">
+            <defs>
+                <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="rgba(255,255,255,0.1)" />
+                    <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+                </radialGradient>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+            </defs>
+            
+            <!-- Groups will be injected via JS -->
+            <g id="zodiac-wheel"></g>
+            <g id="aspect-lines"></g>
+            <g id="planets"></g>
+            
+            <!-- Center decorative element -->
+            <circle cx="250" cy="250" r="40" class="center-glow" />
+            <circle cx="250" cy="250" r="5" fill="#E2E8F0" opacity="0.5" />
+        </svg>
+    </div>
+
+    <script>
+        const cx = 250;
+        const cy = 250;
+        const outerRadius = 240;
+        const innerRadius = 180;
+        const planetRadius = 140;
+
+        // Zodiac Data
+        const zodiacSigns = [
+            { name: 'Aries', color: 'var(--fire)', symbol: '♈' },
+            { name: 'Taurus', color: 'var(--earth)', symbol: '♉' },
+            { name: 'Gemini', color: 'var(--air)', symbol: '♊' },
+            { name: 'Cancer', color: 'var(--water)', symbol: '♋' },
+            { name: 'Leo', color: 'var(--fire)', symbol: '♌' },
+            { name: 'Virgo', color: 'var(--earth)', symbol: '♍' },
+            { name: 'Libra', color: 'var(--air)', symbol: '♎' },
+            { name: 'Scorpio', color: 'var(--water)', symbol: '♏' },
+            { name: 'Sagittarius', color: 'var(--fire)', symbol: '♐' },
+            { name: 'Capricorn', color: 'var(--earth)', symbol: '♑' },
+            { name: 'Aquarius', color: 'var(--air)', symbol: '♒' },
+            { name: 'Pisces', color: 'var(--water)', symbol: '♓' }
+        ];
+
+        // Dummy Planet Data (Degrees 0 - 360)
+        const planets = [
+            { name: 'Sun', degree: 45, symbol: '☀️', color: '#FDB813' },
+            { name: 'Moon', degree: 120, symbol: '🌙', color: '#F1F5F9' },
+            { name: 'Mars', degree: 55, symbol: '♂️', color: '#EF4444' },
+            { name: 'Venus', degree: 200, symbol: '♀️', color: '#10B981' },
+            { name: 'Jupiter', degree: 310, symbol: '♃', color: '#F59E0B' }
+        ];
+
+        // Dummy Aspects
+        const aspects = [
+            { p1: 0, p2: 1, type: 'square' }, // Sun - Moon
+            { p1: 1, p2: 3, type: 'trine' },  // Moon - Venus
+            { p1: 2, p2: 4, type: 'trine' },  // Mars - Jupiter
+            { p1: 0, p2: 4, type: 'square' }  // Sun - Jupiter
+        ];
+
+        const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
+            const angleInRadians = (angleInDegrees * Math.PI) / 180.0;
+            return {
+                x: centerX + (radius * Math.cos(angleInRadians)),
+                y: centerY + (radius * Math.sin(angleInRadians))
+            };
+        };
+
+        const createArcPath = (x, y, radius, startAngle, endAngle) => {
+            const start = polarToCartesian(x, y, radius, endAngle);
+            const end = polarToCartesian(x, y, radius, startAngle);
+            const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+            return [
+                "M", start.x, start.y, 
+                "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y
+            ].join(" ");
+        };
+
+        const createSlicePath = (startAngle, endAngle, innerR, outerR) => {
+            const p1 = polarToCartesian(cx, cy, outerR, endAngle);
+            const p2 = polarToCartesian(cx, cy, outerR, startAngle);
+            const p3 = polarToCartesian(cx, cy, innerR, startAngle);
+            const p4 = polarToCartesian(cx, cy, innerR, endAngle);
+            const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+            return [
+                "M", p1.x, p1.y,
+                "A", outerR, outerR, 0, largeArcFlag, 0, p2.x, p2.y,
+                "L", p3.x, p3.y,
+                "A", innerR, innerR, 0, largeArcFlag, 1, p4.x, p4.y,
+                "Z"
+            ].join(" ");
+        };
+
+        // Draw Zodiac Wheel
+        const wheelGroup = document.getElementById('zodiac-wheel');
+        zodiacSigns.forEach((sign, i) => {
+            const startAngle = i * 30;
+            const endAngle = (i + 1) * 30;
+            const midAngle = startAngle + 15;
+
+            // Slice
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", createSlicePath(startAngle, endAngle, innerRadius, outerRadius));
+            path.setAttribute("fill", sign.color);
+            path.setAttribute("stroke", "var(--ring-border)");
+            path.setAttribute("stroke-width", "1");
+            path.classList.add("zodiac-slice");
+            
+            // Add title for tooltip
+            const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+            title.textContent = sign.name;
+            path.appendChild(title);
+
+            // Ticks (Degrees)
+            for(let j=0; j<30; j+=5) {
+                const tickAngle = startAngle + j;
+                const innerT = j === 0 ? innerRadius : outerRadius - 10;
+                const pStart = polarToCartesian(cx, cy, outerRadius, tickAngle);
+                const pEnd = polarToCartesian(cx, cy, innerT, tickAngle);
+                
+                const tick = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                tick.setAttribute("x1", pStart.x);
+                tick.setAttribute("y1", pStart.y);
+                tick.setAttribute("x2", pEnd.x);
+                tick.setAttribute("y2", pEnd.y);
+                tick.setAttribute("stroke", "rgba(255,255,255,0.2)");
+                tick.setAttribute("stroke-width", j === 0 ? "2" : "1");
+                wheelGroup.appendChild(tick);
+            }
+
+            // Symbol Text
+            const pos = polarToCartesian(cx, cy, innerRadius + 30, midAngle);
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", pos.x);
+            text.setAttribute("y", pos.y);
+            text.setAttribute("fill", "#ffffff");
+            text.setAttribute("font-size", "24px");
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("dominant-baseline", "middle");
+            text.setAttribute("transform", `rotate(90, ${pos.x}, ${pos.y})`); // Counteract main SVG rotation
+            text.textContent = sign.symbol;
+
+            wheelGroup.appendChild(path);
+            wheelGroup.appendChild(text);
+        });
+
+        // Draw Aspects
+        const aspectGroup = document.getElementById('aspect-lines');
+        aspects.forEach(asp => {
+            const p1 = planets[asp.p1];
+            const p2 = planets[asp.p2];
+            
+            const pos1 = polarToCartesian(cx, cy, planetRadius, p1.degree);
+            const pos2 = polarToCartesian(cx, cy, planetRadius, p2.degree);
+
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", pos1.x);
+            line.setAttribute("y1", pos1.y);
+            line.setAttribute("x2", pos2.x);
+            line.setAttribute("y2", pos2.y);
+            line.setAttribute("stroke", asp.type === 'trine' ? "var(--trine)" : "var(--square)");
+            line.setAttribute("stroke-width", "2");
+            line.classList.add("aspect-line");
+            aspectGroup.appendChild(line);
+        });
+
+        // Draw Planets
+        const planetGroup = document.getElementById('planets');
+        planets.forEach((planet) => {
+            const pos = polarToCartesian(cx, cy, planetRadius, planet.degree);
+            
+            // Planet background glow
+            const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            glow.setAttribute("cx", pos.x);
+            glow.setAttribute("cy", pos.y);
+            glow.setAttribute("r", "14");
+            glow.setAttribute("fill", planet.color);
+            glow.setAttribute("opacity", "0.2");
+            glow.setAttribute("filter", "url(#glow)");
+
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", pos.x);
+            text.setAttribute("y", pos.y);
+            text.setAttribute("fill", planet.color);
+            text.setAttribute("font-size", "20px");
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("dominant-baseline", "middle");
+            text.setAttribute("transform", `rotate(90, ${pos.x}, ${pos.y})`);
+            text.classList.add("planet");
+            text.textContent = planet.symbol;
+
+            // Add title for tooltip
+            const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+            title.textContent = `${planet.name} (${planet.degree}°)`;
+            text.appendChild(title);
+
+            planetGroup.appendChild(glow);
+            planetGroup.appendChild(text);
+        });
+
+    </script>
+</body>
+</html>

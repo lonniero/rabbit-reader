@@ -89,49 +89,50 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
     svg += `<circle cx="${cx}" cy="${cy}" r="${R_ZODIAC_INNER}" fill="none" stroke="${K}" stroke-width="2"/>`;
     svg += `<circle cx="${cx}" cy="${cy}" r="${R_ASPECTS}" fill="none" stroke="${K}" stroke-width="1.5"/>`;
 
-    // Degree Ticks on the inner rim of the zodiac slice, pointing inward
+    // Degree Ticks on the inner rim of the zodiac band, pointing INTO the band
     for (let deg = 0; deg < 360; deg++) {
         const isMajor = deg % 30 === 0;
         const isTen = deg % 10 === 0;
         const isFive = deg % 5 === 0;
         if (isMajor) continue; 
         
-        const tickLen = isTen ? 30 : (isFive ? 18 : 8);
+        const tickLen = isTen ? 14 : (isFive ? 9 : 4);
         const p1 = lonToXY(deg, R_ZODIAC_INNER, cx, cy, asc); 
-        const p2 = lonToXY(deg, R_ZODIAC_INNER - tickLen, cx, cy, asc); 
+        const p2 = lonToXY(deg, R_ZODIAC_INNER + tickLen, cx, cy, asc); 
         svg += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${K}" stroke-width="${isFive ? 1.5 : 0.5}" opacity="0.8"/>`;
     }
 
-    // Sign Boundaries and Glyphs
+    // Sign Boundaries — only span the zodiac band (outer to inner)
     for (let i = 0; i < 12; i++) {
         const sL = i * 30;
         
-        // Boundaries cross the Zodiac band and Ticks band, ending at R_ASPECTS
         const d1 = lonToXY(sL, R_ZODIAC_OUTER, cx, cy, asc);
-        const d2 = lonToXY(sL, R_ASPECTS, cx, cy, asc);
+        const d2 = lonToXY(sL, R_ZODIAC_INNER, cx, cy, asc);
         svg += `<line x1="${d1.x}" y1="${d1.y}" x2="${d2.x}" y2="${d2.y}" stroke="${K}" stroke-width="1.5"/>`;
 
-        // Zodiac symbols sit in the middle of the zodiac band
-        const mid = lonToXY(sL + 15, (R_ZODIAC_INNER + R_ZODIAC_OUTER) / 2, cx, cy, asc);
+        // Zodiac symbols sit in the upper half of the zodiac band (above ticks)
+        const mid = lonToXY(sL + 15, R_ZODIAC_INNER + (R_ZODIAC_OUTER - R_ZODIAC_INNER) * 0.6, cx, cy, asc);
         const signColor = SIGN_COLORS ? SIGN_COLORS[i] : K;
-        svg += `<text x="${mid.x}" y="${mid.y}" text-anchor="middle" dominant-baseline="central" fill="${signColor}" font-size="44" font-family="serif" font-weight="bold">${SIGN_SYMBOLS[i]}</text>`;
+        svg += `<text x="${mid.x}" y="${mid.y}" text-anchor="middle" dominant-baseline="central" fill="${signColor}" font-size="40" font-family="serif" font-weight="bold">${SIGN_SYMBOLS[i]}</text>`;
     }
 
     // Houses
     if (houses) {
+        // House cusp lines span from R_ZODIAC_INNER to R_ASPECTS (house area only)
         houses.cusps.forEach(c => {
             const isAng = [1, 4, 7, 10].includes(c.house);
-            // House cusps go from R_ASPECTS outward, crossing the ticks and zodiac bands
-            const p1 = lonToXY(c.longitude, R_ASPECTS, cx, cy, asc);
-            const p2 = lonToXY(c.longitude, R_ZODIAC_OUTER + (isAng ? 15 : 0), cx, cy, asc);
-            svg += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${isAng ? '#FF0000' : K}" stroke-width="${isAng ? 1.5 : 1}" opacity="0.8"/>`;
+            const p1 = lonToXY(c.longitude, R_ZODIAC_INNER, cx, cy, asc);
+            const p2 = lonToXY(c.longitude, R_ASPECTS, cx, cy, asc);
+            svg += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${K}" stroke-width="${isAng ? 2 : 0.8}" opacity="${isAng ? 1 : 0.6}"/>`;
         });
 
-        // House numbers on the outer rim of the inner ticks band
-        houses.cusps.forEach((c) => {
-            // Place number slightly after the cusp line, near the zodiac inner rim
-            const p = lonToXY(c.longitude + 4, R_ZODIAC_INNER - 18, cx, cy, asc);
-            svg += `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" fill="${K}" font-size="16" font-weight="bold" opacity="0.8" font-family="'Inter',sans-serif">${c.house}</text>`;
+        // House numbers on the outer rim of the house area (just inside R_ZODIAC_INNER)
+        houses.cusps.forEach((c, i) => {
+            const next = houses.cusps[(i + 1) % 12];
+            // Place number at the midpoint between this cusp and the next
+            let midLon = c.longitude + ((((next.longitude - c.longitude) + 360) % 360) / 2);
+            const p = lonToXY(midLon, R_ZODIAC_INNER - 16, cx, cy, asc);
+            svg += `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" fill="${K}" font-size="14" font-weight="bold" opacity="0.7" font-family="'Inter',sans-serif">${c.house}</text>`;
         });
 
         // AC / DC / MC / IC Labels
