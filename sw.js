@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rabbit-reader-v2';
+const CACHE_NAME = 'rabbit-reader-v5'; // Bumped version
 const ASSETS = [
   './',
   './index.html',
@@ -12,48 +12,49 @@ const ASSETS = [
   './lib/jszip.min.js'
 ];
 
-// Install: Cache all assets
+// Install: Cache all assets and force immediate activation
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Force the waiting service worker to become the active service worker
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Rabbit Reader: Caching assets for offline use');
+      console.log('Rabbit Reader: Caching assets');
       return cache.addAll(ASSETS);
     })
   );
 });
 
-// Activate: Clean up old caches
+// Activate: Clean up old caches and take control of all clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      );
-    })
+    Promise.all([
+      self.clients.claim(), // Start controlling all open clients immediately
+      caches.keys().then((keys) => {
+        return Promise.all(
+          keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+        );
+      })
+    ])
   );
 });
 
-// Fetch: Serve from cache first, then network
+// Fetch: Network-first approach for index/app, but Cache-first fallback
 self.addEventListener('fetch', (event) => {
+  // Only handle GET requests
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      // If we have a cached version, return it
-      if (response) return response;
-      
-      // Otherwise, fetch from network and cache it for next time
-      return fetch(event.request).then((networkResponse) => {
-        // Don't cache if not a valid response
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
+    caches.match(event.request).then((cachedResponse) => {
+      // If we are offline, the network fetch will fail, and we return the cache.
+      // If we are online, we try to get the latest, but fallback to cache if slow/fails.
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
         }
-
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
         return networkResponse;
-      });
+      }).catch(() => cachedResponse); // On network error, return cache
+
+      return cachedResponse || fetchPromise;
     })
   );
 });

@@ -87,9 +87,29 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('Rabbit Reader: Offline Mode Ready'))
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => {
+            console.log('Rabbit Reader: Service Worker registered');
+            // If there's an update, force it to take over
+            reg.onupdatefound = () => {
+              const installingWorker = reg.installing;
+              installingWorker.onstatechange = () => {
+                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('New version available, please refresh.');
+                }
+              };
+            };
+          })
           .catch(err => console.log('Offline Setup Failed:', err));
+      });
+
+      // Reload if the service worker takes control (new version)
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
       });
     }
   </script>
