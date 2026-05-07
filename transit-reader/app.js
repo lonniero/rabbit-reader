@@ -1,6 +1,6 @@
-import { calcTransits } from './api.js?v=18';
-import { generateChartSVG } from './chartRenderer.js?v=18';
-import { lonToSign } from './chartHelpers.js?v=18';
+import { calcTransits } from './api.js?v=19';
+import { generateChartSVG } from './chartRenderer.js?v=19';
+import { lonToSign } from './chartHelpers.js?v=19';
 
 let appData = null;
 

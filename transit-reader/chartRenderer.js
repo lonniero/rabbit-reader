@@ -11,49 +11,27 @@ function angDiff(a, b) {
 
 function layoutGlyphs(planets, minSepDeg) {
     if (!planets || planets.length === 0) return [];
-
-    const items = planets.map(p => ({ ...p, drawLon: p.longitude }));
+    let items = planets.map(p => ({ ...p, drawLon: p.longitude }));
     items.sort((a, b) => a.longitude - b.longitude);
 
-    const CLUSTER_GAP = 22; 
-    const clusters = [];
-    let group = [0];
-    for (let i = 1; i < items.length; i++) {
-        const gap = Math.abs(angDiff(items[i].longitude, items[group[group.length - 1]].longitude));
-        if (gap < CLUSTER_GAP) {
-            group.push(i);
-        } else {
-            clusters.push(group);
-            group = [i];
+    for (let iter = 0; iter < 150; iter++) {
+        let moved = false;
+        for (let i = 0; i < items.length; i++) {
+            let j = (i + 1) % items.length;
+            let diff = angDiff(items[j].drawLon, items[i].drawLon);
+            let ccwDist = diff >= 0 ? diff : (360 + diff);
+            
+            if (ccwDist < minSepDeg) {
+                let overlap = minSepDeg - ccwDist;
+                items[j].drawLon += overlap / 2 + 0.1;
+                items[i].drawLon -= overlap / 2 + 0.1;
+                items[j].drawLon = (items[j].drawLon % 360 + 360) % 360;
+                items[i].drawLon = (items[i].drawLon % 360 + 360) % 360;
+                moved = true;
+            }
         }
+        if (!moved) break;
     }
-    clusters.push(group);
-
-    for (const grp of clusters) {
-        if (grp.length < 2) continue;
-        const lons = grp.map(i => items[i].longitude);
-        const center = lons.reduce((s, l) => s + l, 0) / lons.length;
-        const span = (grp.length - 1) * minSepDeg;
-        grp.forEach((idx, i) => {
-            items[idx].drawLon = center - span / 2 + i * minSepDeg;
-        });
-    }
-
-    for (let k = 1; k < clusters.length; k++) {
-        const prev = clusters[k - 1];
-        const curr = clusters[k];
-        const prevMax = items[prev[prev.length - 1]].drawLon;
-        const currMin = items[curr[0]].drawLon;
-        if (currMin < prevMax + minSepDeg) {
-            const shift = prevMax + minSepDeg - currMin;
-            curr.forEach(idx => { items[idx].drawLon += shift; });
-        }
-    }
-
-    const byLon = [...items].sort((a, b) => a.longitude - b.longitude);
-    const drawLons = byLon.map(it => it.drawLon).sort((a, b) => a - b);
-    byLon.forEach((it, i) => { it.drawLon = drawLons[i]; });
-
     return items;
 }
 
@@ -181,28 +159,29 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
 
     // Natal Planets (Main Chart)
     const isBiWheel = transits.length > 0;
-    const natalItems = layoutGlyphs(natal, 8);
+    const natalItems = layoutGlyphs(natal, 10);
     for (const p of natalItems) {
         const pColor = PLANET_COLORS[p.name] || K;
         const sym = PLANET_SYMBOLS[p.name] || p.name.substring(0,2);
         const info = lonToSign(p.longitude);
 
         // Stem from outer house rim to glyph
-        const pHouseOuter = lonToXY(p.longitude, R_HOUSE_OUTER, cx, cy, asc);
+        const pStart = lonToXY(p.longitude, R_HOUSE_OUTER, cx, cy, asc);
+        const pElbow = lonToXY(p.longitude, R_HOUSE_OUTER + 12, cx, cy, asc);
         const pGlyphEdge = lonToXY(p.drawLon, R_NATAL_PLANETS - 16, cx, cy, asc);
         const pGlyph = lonToXY(p.drawLon, R_NATAL_PLANETS, cx, cy, asc);
 
-        svg += `<line x1="${pHouseOuter.x}" y1="${pHouseOuter.y}" x2="${pGlyphEdge.x}" y2="${pGlyphEdge.y}" stroke="${pColor}" stroke-width="1"/>`;
+        svg += `<polyline points="${pStart.x},${pStart.y} ${pElbow.x},${pElbow.y} ${pGlyphEdge.x},${pGlyphEdge.y}" stroke="${pColor}" stroke-width="1" fill="none"/>`;
 
         // Planet degree text
         const degStr = `${info.deg}°`;
         const minStr = `${String(info.min).padStart(2, '0')}'`;
         
-        const dx = p.drawLon > 90 && p.drawLon < 270 ? -24 : 24;
+        const dx = p.drawLon > 90 && p.drawLon < 270 ? -22 : 22;
         const txtAnchor = p.drawLon > 90 && p.drawLon < 270 ? 'end' : 'start';
 
-        svg += `<text x="${pGlyph.x + dx}" y="${pGlyph.y - 8}" text-anchor="${txtAnchor}" dominant-baseline="central" fill="${pColor}" font-size="12" font-weight="bold" font-family="'Inter',sans-serif">${degStr}</text>`;
-        svg += `<text x="${pGlyph.x + dx}" y="${pGlyph.y + 8}" text-anchor="${txtAnchor}" dominant-baseline="central" fill="${pColor}" font-size="10" font-weight="normal" font-family="'Inter',sans-serif">${minStr}</text>`;
+        svg += `<text x="${pGlyph.x + dx}" y="${pGlyph.y - 7}" text-anchor="${txtAnchor}" dominant-baseline="central" fill="${pColor}" font-size="11" font-weight="bold" font-family="'Inter',sans-serif">${degStr}</text>`;
+        svg += `<text x="${pGlyph.x + dx}" y="${pGlyph.y + 7}" text-anchor="${txtAnchor}" dominant-baseline="central" fill="${pColor}" font-size="9" font-weight="normal" font-family="'Inter',sans-serif">${minStr}</text>`;
 
         // Glyph
         svg += `<text x="${pGlyph.x}" y="${pGlyph.y}" text-anchor="middle" dominant-baseline="central" fill="${pColor}" font-size="40" font-family="serif" font-weight="bold">${sym}</text>`;
@@ -217,26 +196,27 @@ export function generateChartSVG(natalChart, transitData, highlight = null) {
         // Draw a separator ring for transits
         svg += `<circle cx="${cx}" cy="${cy}" r="${R_TRANSITS_INNER}" fill="none" stroke="${K}" stroke-width="1.5"/>`;
 
-        const transitItems = layoutGlyphs(transits, 7);
+        const transitItems = layoutGlyphs(transits, 8.5);
         for (const p of transitItems) {
             const pColor = PLANET_COLORS[p.name] || K;
             const sym = PLANET_SYMBOLS[p.name] || p.name.substring(0,2);
             const info = lonToSign(p.longitude);
 
-            // Stems for transits: straight angled lines from the transit inner ring
-            const pRadStart = lonToXY(p.longitude, R_TRANSITS_INNER, cx, cy, asc);
+            // Stems for transits: elbows
+            const pStart = lonToXY(p.longitude, R_TRANSITS_INNER, cx, cy, asc);
+            const pElbow = lonToXY(p.longitude, R_TRANSITS_INNER + 12, cx, cy, asc);
             const pGlyphEdge = lonToXY(p.drawLon, R_TRANSIT_PLANETS - 16, cx, cy, asc);
             const pGlyph = lonToXY(p.drawLon, R_TRANSIT_PLANETS, cx, cy, asc);
 
-            svg += `<line x1="${pRadStart.x}" y1="${pRadStart.y}" x2="${pGlyphEdge.x}" y2="${pGlyphEdge.y}" stroke="${pColor}" stroke-width="1.5" opacity="0.8"/>`;
+            svg += `<polyline points="${pStart.x},${pStart.y} ${pElbow.x},${pElbow.y} ${pGlyphEdge.x},${pGlyphEdge.y}" stroke="${pColor}" stroke-width="1.5" opacity="0.8" fill="none"/>`;
 
             const degStr = `${info.deg}°`;
             const minStr = `${String(info.min).padStart(2, '0')}'`;
-            const dx = p.drawLon > 90 && p.drawLon < 270 ? -28 : 28;
+            const dx = p.drawLon > 90 && p.drawLon < 270 ? -24 : 24;
             const txtAnchor = p.drawLon > 90 && p.drawLon < 270 ? 'end' : 'start';
 
-            svg += `<text x="${pGlyph.x + dx}" y="${pGlyph.y - 8}" text-anchor="${txtAnchor}" dominant-baseline="central" fill="${pColor}" font-size="14" font-weight="bold" font-family="'Inter',sans-serif">${degStr}</text>`;
-            svg += `<text x="${pGlyph.x + dx}" y="${pGlyph.y + 8}" text-anchor="${txtAnchor}" dominant-baseline="central" fill="${pColor}" font-size="12" font-weight="normal" font-family="'Inter',sans-serif">${minStr}</text>`;
+            svg += `<text x="${pGlyph.x + dx}" y="${pGlyph.y - 7}" text-anchor="${txtAnchor}" dominant-baseline="central" fill="${pColor}" font-size="13" font-weight="bold" font-family="'Inter',sans-serif">${degStr}</text>`;
+            svg += `<text x="${pGlyph.x + dx}" y="${pGlyph.y + 7}" text-anchor="${txtAnchor}" dominant-baseline="central" fill="${pColor}" font-size="11" font-weight="normal" font-family="'Inter',sans-serif">${minStr}</text>`;
 
             svg += `<text x="${pGlyph.x}" y="${pGlyph.y}" text-anchor="middle" dominant-baseline="central" fill="${pColor}" font-size="42" font-family="serif" font-weight="bold">${sym}</text>`;
             
