@@ -19,10 +19,10 @@ jobs:
       - name: Prepare deploy folder
         run: |
           mkdir -p _deploy
-          # Copy only frontend files (not backend)
-          cp -r index.html app.js style.css books/ rss/ transit-reader/ _deploy/ 2>/dev/null || true
-          # Copy any other static assets
-          cp -r *.png *.ico _deploy/ 2>/dev/null || true
+          # Copy frontend files, libraries, and metadata
+          cp -r index.html app.js style.css books.js sw.js manifest.json lib/ rss/ transit-reader/ _deploy/ 2>/dev/null || true
+          # Copy images and other assets
+          cp -r *.png *.ico *.json _deploy/ 2>/dev/null || true
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
