@@ -60,6 +60,9 @@ function layoutGlyphs(planets, minSepDeg) {
 export function generateChartSVG(natalChart, transitData, highlight = null) {
     if (!natalChart) return '';
 
+    const S = 960, cx = 480, cy = 480;
+    const K = STROKE;
+
     // Layout (inside → outside):
     //   Aspect ring → wider zodiac band → narrow house band → natal planets
     const R_ASPECTS     = 140;  // aspect lines touch here
