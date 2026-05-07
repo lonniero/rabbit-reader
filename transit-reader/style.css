@@ -22,15 +22,7 @@ body {
   width: 100vw;
 }
 
-.header {
-  padding: 12px;
-  text-align: center;
-  font-weight: 900;
-  font-size: 1.2rem;
-  letter-spacing: 1px;
-  background: #000;
-  border-bottom: 2px solid var(--accent);
-}
+
 
 .nav {
   display: flex;
@@ -76,9 +68,7 @@ body {
 
 /* CURRENT PLANETS TABLE */
 .list-view {
-  padding: 16px;
-  overflow: hidden;
-  height: 100%;
+  padding: 8px;
   display: flex;
   flex-direction: column;
 }
@@ -106,35 +96,42 @@ body {
   flex: 1;
 }
 .cp-row {
-  display: grid;
-  grid-template-columns: 30px 1fr 30px 30px 70px 45px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  font-family: monospace;
-  font-size: 0.9rem;
-  padding: 0 8px;
+  padding: 12px 6px;
   border-bottom: 1px solid #333;
-  flex: 1;
+  font-family: monospace;
+  font-size: 1rem;
 }
 .cp-row:last-child {
   border-bottom: none;
 }
+.cp-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cp-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .cp-glyph {
-  font-size: 1.2rem;
-  text-align: center;
+  font-size: 1.5rem;
+  color: #fff;
 }
 .cp-name {
+  color: #d1d5db;
+  font-weight: 500;
   font-family: 'Inter', sans-serif;
-  font-size: 1rem;
-  padding-left: 8px;
-  font-weight: 600;
 }
 .cp-deg {
-  text-align: right;
-  padding-right: 4px;
+  color: #9ca3af;
 }
 .cp-sign {
-  font-size: 1.2rem;
-  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
 }
 .cp-minsec {
   text-align: left;

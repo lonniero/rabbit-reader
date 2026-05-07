@@ -1,6 +1,6 @@
-import { calcTransits } from './api.js?v=19';
-import { generateChartSVG } from './chartRenderer.js?v=19';
-import { lonToSign } from './chartHelpers.js?v=19';
+import { calcTransits } from './api.js?v=21';
+import { generateChartSVG } from './chartRenderer.js?v=21';
+import { lonToSign } from './chartHelpers.js?v=21';
 
 let appData = null;
 
@@ -98,12 +98,14 @@ function renderList() {
 
     html += `
       <div class="cp-row">
-        <div class="cp-glyph">${p.symbol}</div>
-        <div class="cp-name">${p.name}</div>
-        <div class="cp-deg">${p.degree}</div>
-        <div class="cp-sign" style="color: ${signColor};">${p.signSymbol}</div>
-        <div class="cp-minsec">${minSecStr}</div>
-        <div class="cp-lat">${latStr}</div>
+        <div class="cp-left">
+          <span class="cp-glyph">${p.symbol}</span>
+          <span class="cp-name">${p.name}</span>
+        </div>
+        <div class="cp-right">
+          <span class="cp-deg">${p.degree}&deg; ${minSecStr}</span>
+          <span class="cp-sign" style="color: ${signColor};">${p.signSymbol}</span>
+        </div>
       </div>
     `;
   });

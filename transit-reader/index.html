@@ -4,36 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Astro Transit Reader</title>
-  <link rel="stylesheet" href="style.css?v=19">
+  <link rel="stylesheet" href="style.css?v=21">
 </head>
 <body>
 
-  <div class="header">TRANSIT READER</div>
-
   <div class="content">
     <div id="view-list" class="view active">
-      <div class="list-view" id="transit-list">
-        <!-- Transit items -->
-      </div>
+      <div class="list-view" id="transit-list"></div>
     </div>
-
     <div id="view-mandala" class="view">
-      <div class="chart-container" id="chart-mandala">
-        <!-- SVG injected here -->
-      </div>
+      <div id="chart-mandala" class="chart-container"></div>
     </div>
-
     <div id="view-combined" class="view">
-      <div class="chart-container" id="chart-combined">
-        <!-- SVG injected here -->
-      </div>
+      <div id="chart-combined" class="chart-container"></div>
     </div>
   </div>
 
   <div class="nav">
-    <button class="nav-btn active" onclick="switchView('view-list')">LIST</button>
-    <button class="nav-btn" onclick="switchView('view-mandala')">MANDALA</button>
-    <button class="nav-btn" onclick="switchView('view-combined')">COMBINED</button>
+    <button class="nav-btn active" onclick="switchView('view-list')">List</button>
+    <button class="nav-btn" onclick="switchView('view-mandala')">Transit</button>
+    <button class="nav-btn" onclick="switchView('view-combined')">Combined</button>
   </div>
 
   <div id="loading">
@@ -41,6 +31,6 @@
     <div id="loading-text" style="font-weight:600;">Initializing...</div>
   </div>
 
-  <script type="module" src="app.js?v=19"></script></script>
+  <script type="module" src="app.js?v=21"></script>
 </body>
 </html>
