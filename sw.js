@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rabbit-reader-v5'; // Bumped version
+const CACHE_NAME = 'rabbit-reader-v6'; // Responsive layout update
 const ASSETS = [
   './',
   './index.html',
