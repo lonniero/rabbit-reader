@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rabbit-reader-v6'; // Responsive layout update
+const CACHE_NAME = 'rabbit-reader-v7'; // safe-area + browse button + position sync
 const ASSETS = [
   './',
   './index.html',

@@ -30,6 +30,11 @@ body {
   touch-action: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  /* Safe area — respects notch / home bar on iPhone */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* ── Screens ── */
@@ -317,6 +322,11 @@ body {
   justify-content: center;
   gap: clamp(6px, 1.5vw, 14px);
 }
+
+/* Browse button — visible on phone only, hidden on R1 */
+.ctrl-btn.phone-browse {
+  display: flex;
+}
 .ctrl-btn.small {
   width: auto;
   padding: 0 clamp(6px, 1.8vw, 14px);
@@ -452,7 +462,12 @@ body {
     width: 240px;
     height: 282px;
     overflow: hidden;
+    /* No safe-area padding on R1 — it has no notch */
+    padding: 0;
   }
+
+  /* Browse button is hidden on R1 — side button is used instead */
+  .ctrl-btn.phone-browse { display: none; }
 
   /* Snap all clamp() values to their R1-specific pixel equivalents */
   .screen-header   { font-size: 10px; padding: 10px 0 4px; }

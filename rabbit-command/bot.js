@@ -118,6 +118,26 @@ app.get('/api/books/:id/text', async (req, res) => {
   }
 });
 
+// ── Position Sync API ──
+// In-memory store: position syncs between phone ⇄ R1.
+// Resets on server restart (localStorage is the primary source of truth).
+const _positions = new Map();
+
+// GET /api/positions/:id — retrieve last synced position
+app.get('/api/positions/:id', (req, res) => {
+  const pos = _positions.get(req.params.id);
+  if (pos === undefined) return res.status(404).json({ error: 'No position saved' });
+  res.json({ bookId: req.params.id, position: pos });
+});
+
+// POST /api/positions/:id — save position from any device
+app.post('/api/positions/:id', (req, res) => {
+  const pos = req.body?.position;
+  if (typeof pos !== 'number' || pos < 0) return res.status(400).json({ error: 'position must be a non-negative number' });
+  _positions.set(req.params.id, pos);
+  res.json({ ok: true, bookId: req.params.id, position: pos });
+});
+
 // ── Feeds API ──
 
 // GET /api/feeds — list all active feeds
@@ -244,6 +264,8 @@ async function main() {
     console.log(`🌐 API proxy running on port ${config.PORT}`);
     console.log(`   GET /api/books             — list books`);
     console.log(`   GET /api/books/:id/text    — get book text`);
+    console.log(`   GET /api/positions/:id     — get reading position`);
+    console.log(`   POST /api/positions/:id    — save reading position`);
     console.log(`   GET /api/feeds             — list feeds`);
     console.log(`   GET /api/feeds/:id/articles — get articles`);
     console.log(`   GET /api/timeline          — aggregated feed`);

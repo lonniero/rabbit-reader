@@ -113,10 +113,33 @@ function updateBookPosition(id, pos) {
 function setLastBook(id) { try { localStorage.setItem(LAST_BOOK_KEY, id); } catch {} }
 function getLastBook() { try { return localStorage.getItem(LAST_BOOK_KEY); } catch { return null; } }
 
-// Universal position store
+// Universal position store (localStorage — per device)
 function getPositions() { try { return JSON.parse(localStorage.getItem(POS_KEY)) || {}; } catch { return {}; } }
 function savePosition(id, pos) { const p = getPositions(); p[id] = pos; localStorage.setItem(POS_KEY, JSON.stringify(p)); }
 function getPosition(id) { return getPositions()[id] || 0; }
+
+// ── Cloud position sync (via Rabbit Command API) ──
+// Pushes/pulls reading position so phone ⇄ R1 stay in sync.
+async function pushPositionToCloud(bookId, pos) {
+  if (!bookId || bookId.startsWith('_sample') || bookId.startsWith('_bundled')) return;
+  try {
+    await fetch(API_BASE + '/api/positions/' + encodeURIComponent(bookId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ position: pos }),
+    });
+  } catch { /* offline — silently skip */ }
+}
+
+async function pullPositionFromCloud(bookId) {
+  if (!bookId || bookId.startsWith('_sample') || bookId.startsWith('_bundled')) return null;
+  try {
+    const resp = await fetch(API_BASE + '/api/positions/' + encodeURIComponent(bookId));
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return (typeof data.position === 'number') ? data.position : null;
+  } catch { return null; }
+}
 
 // ══════════════════════════════════════
 //  PDF / EPUB PARSERS
@@ -214,10 +237,21 @@ function loadText(text, bookId) {
   elPlay.textContent = '▶';
   showScreen('reader-screen');
   
-  // Wait a frame for layout to complete so offsetWidth is accurate
-  requestAnimationFrame(() => {
-    updateDisplay();
-  });
+  // Try to pull a more up-to-date position from the cloud
+  // (lets phone and R1 resume from the same spot)
+  if (bookId && !bookId.startsWith('_sample') && !bookId.startsWith('_bundled')) {
+    pullPositionFromCloud(bookId).then(cloudPos => {
+      if (cloudPos !== null && cloudPos > wordIndex && cloudPos < words.length) {
+        wordIndex = cloudPos;
+      }
+      requestAnimationFrame(() => updateDisplay());
+    });
+  } else {
+    // Wait a frame for layout to complete so offsetWidth is accurate
+    requestAnimationFrame(() => {
+      updateDisplay();
+    });
+  }
 }
 
 function detectChapters() {
@@ -336,7 +370,10 @@ function stopReading() {
   clearTimeout(timer);
   elState.textContent = 'PAUSED';
   elPlay.textContent = '▶';
-  if (currentBookId) updateBookPosition(currentBookId, wordIndex);
+  if (currentBookId) {
+    updateBookPosition(currentBookId, wordIndex);
+    pushPositionToCloud(currentBookId, wordIndex); // sync to cloud for other device
+  }
 }
 
 function togglePlay() {
@@ -594,6 +631,7 @@ document.addEventListener('click', (e) => {
     case 'library':     showScreen('library-screen'); break;
     case 'back-menu':   stopReading(); showScreen('library-screen'); break;
     case 'back-reader': showScreen('reader-screen'); break;
+    case 'browse':      if (words.length > 0) openBrowseMode(); break;  // phone browse button
     case 'toggle-play': togglePlay(); break;
     case 'speed-up':    changeSpeed(WPM_STEP); break;
     case 'speed-down':  changeSpeed(-WPM_STEP); break;
@@ -659,7 +697,12 @@ function doScrollDown() {
 
 function handleScrollUp() {
   const scr = document.querySelector('.screen.active');
-  if (scr && scr.id === 'browse-screen') return;
+  // In browse mode, scroll the text body up instead of changing reader state
+  if (scr && scr.id === 'browse-screen') {
+    const body = document.getElementById('browse-body');
+    if (body) body.scrollTop -= 40;
+    return;
+  }
   if (scr && scr.id !== 'reader-screen') return;
 
   const ori = getCurrentOrientation();
@@ -674,7 +717,12 @@ function handleScrollUp() {
 
 function handleScrollDown() {
   const scr = document.querySelector('.screen.active');
-  if (scr && scr.id === 'browse-screen') return;
+  // In browse mode, scroll the text body down instead of changing reader state
+  if (scr && scr.id === 'browse-screen') {
+    const body = document.getElementById('browse-body');
+    if (body) body.scrollTop += 40;
+    return;
+  }
   if (scr && scr.id !== 'reader-screen') return;
 
   const ori = getCurrentOrientation();
