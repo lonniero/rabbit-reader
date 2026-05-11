@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rabbit-reader-v7'; // safe-area + browse button + position sync
+const CACHE_NAME = 'rabbit-reader-v8'; // safe-area fix on .screen
 const ASSETS = [
   './',
   './index.html',
