@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rabbit-reader-v9'; // full browse scroll, landscape padding, ORP fix, font controls
+const CACHE_NAME = 'rabbit-reader-v10'; // fix rss backend url
 const ASSETS = [
   './',
   './index.html',
