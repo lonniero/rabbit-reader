@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rabbit-reader-v11'; // add web link button
+const CACHE_NAME = 'rabbit-reader-v12'; // r1 compat location.href
 const ASSETS = [
   './',
   './index.html',

@@ -525,7 +525,7 @@ document.addEventListener('click', (e) => {
 
     // Article
     case 'back-timeline':  showScreen('timeline-screen'); break;
-    case 'open-link':      if(currentArticle && currentArticle.link) window.open(currentArticle.link, '_blank'); break;
+    case 'open-link':      if(currentArticle && currentArticle.link) window.location.href = currentArticle.link; break;
     case 'start-rsvp':     startRSVP(); break;
     case 'art-font-up':    changeArtFont(1); break;
     case 'art-font-down':  changeArtFont(-1); break;
