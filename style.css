@@ -351,7 +351,9 @@ body {
 }
 
 /* ═══ Browse Mode ═══ */
-#browse-screen { padding: 0; gap: 0; }
+/* Only zero the left/right padding — let the top/bottom safe-area
+   from .screen survive so content clears the notch and home bar */
+#browse-screen { padding-left: 0; padding-right: 0; gap: 0; }
 .browse-top {
   width: 100%;
   padding: clamp(6px, 1.8vh, 12px) clamp(8px, 2.5vw, 16px);
@@ -545,6 +547,19 @@ body {
     width: 240px; height: 282px;
     transform: none;
     position: static;
+  }
+}
+
+/* ── Landscape: extra horizontal padding to clear camera island ── */
+/* Only applies on real phones (not R1 which is handled above) */
+@media (orientation: landscape) and (min-width: 301px) {
+  .browse-top,
+  .browse-body,
+  .browse-bottom {
+    /* On top of any existing padding, add generous side room to clear the
+       camera bump. env() gives the notch width; we add 8px breathing room. */
+    padding-left:  max(clamp(12px, 4vw, 24px), calc(env(safe-area-inset-left)  + 8px));
+    padding-right: max(clamp(12px, 4vw, 24px), calc(env(safe-area-inset-right) + 8px));
   }
 }
 

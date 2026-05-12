@@ -297,6 +297,14 @@ function renderWord(word) {
     '<span class="orp-letter">' + letter + '</span>' +
     '<span class="orp-post">' + post + '</span>';
 
+  // Sync measurement canvas to actual rendered font so ORP aligns
+  // correctly at any screen size (phone vs R1 vs landscape)
+  const cs = window.getComputedStyle(elWord);
+  const pxSize = parseFloat(cs.fontSize);
+  if (pxSize > 0) {
+    _mc.font = `700 ${pxSize}px -apple-system, "Helvetica Neue", sans-serif`;
+  }
+
   // Position so ORP letter aligns with center guide marks
   const zoneW = elWord.parentElement.offsetWidth;
   const preW = _mc.measureText(pre).width;
@@ -454,10 +462,10 @@ function openBrowseMode() {
   const body = $('#browse-body');
   body.style.fontSize = browseFontSize + 'px';
 
-  // Show ~800 words centered on current position
-  const range = 400;
-  const start = Math.max(0, wordIndex - range);
-  const end = Math.min(words.length, wordIndex + range);
+  // Render ALL words so the user can scroll the full book
+  // (previously limited to ±400 words around current position)
+  const start = 0;
+  const end = words.length;
 
   // Find chapter boundaries for labels
   const chapterStarts = new Set(currentChapters.map(c => c.wordIndex));

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rabbit-reader-v8'; // safe-area fix on .screen
+const CACHE_NAME = 'rabbit-reader-v9'; // full browse scroll, landscape padding, ORP fix, font controls
 const ASSETS = [
   './',
   './index.html',

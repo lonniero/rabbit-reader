@@ -54,7 +54,11 @@
   <div id="browse-screen" class="screen">
     <div class="browse-top">
       <span class="browse-title" id="browse-title">Browse</span>
-      <span class="browse-hint">tap word → RSVP</span>
+      <div style="display:flex;align-items:center;gap:clamp(4px,1.5vw,10px)">
+        <span class="ctrl-btn small" data-action="browse-font-down" style="width:auto;padding:0 clamp(4px,1.2vw,8px)">A−</span>
+        <span class="ctrl-btn small" data-action="browse-font-up"   style="width:auto;padding:0 clamp(4px,1.2vw,8px)">A+</span>
+        <span class="browse-hint">tap word → RSVP</span>
+      </div>
     </div>
     <div class="browse-body" id="browse-body"></div>
     <div class="browse-bottom">
