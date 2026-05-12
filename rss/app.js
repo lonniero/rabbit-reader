@@ -8,7 +8,7 @@
 // ══════════════════════════════════════
 
 // API base URL — change this when deployed to Railway
-const API_BASE = 'https://rabbit-command-production.up.railway.app';
+const API_BASE = 'https://rabbit-bot-production.up.railway.app';
 // For local development, use: 'http://localhost:3000'
 
 const CACHE_KEY = 'rabbit_rss_timeline';
