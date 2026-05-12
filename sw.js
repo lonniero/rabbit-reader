@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rabbit-reader-v12'; // r1 compat location.href
+const CACHE_NAME = 'rabbit-reader-v13'; // polyfill fetch timeout
 const ASSETS = [
   './',
   './index.html',

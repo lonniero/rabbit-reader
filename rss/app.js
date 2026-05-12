@@ -91,26 +91,32 @@ function getCategoryClass(cat) {
 //  API CALLS
 // ══════════════════════════════════════
 
+function fetchWithTimeout(url, timeout = 20000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
+}
+
 async function fetchTimeline(category) {
   const params = new URLSearchParams();
   if (category && category !== 'all') params.set('category', category);
   params.set('limit', '15');
 
   const url = `${API_BASE}/api/timeline?${params}`;
-  const resp = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  const resp = await fetchWithTimeout(url, 20000);
   if (!resp.ok) throw new Error(`API error: ${resp.status}`);
   return resp.json();
 }
 
 async function fetchArticleContent(articleUrl) {
   const url = `${API_BASE}/api/articles/content?url=${encodeURIComponent(articleUrl)}`;
-  const resp = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  const resp = await fetchWithTimeout(url, 20000);
   if (!resp.ok) throw new Error(`Scrape error: ${resp.status}`);
   return resp.json();
 }
 
 async function fetchFeeds() {
-  const resp = await fetch(`${API_BASE}/api/feeds`, { signal: AbortSignal.timeout(10000) });
+  const resp = await fetchWithTimeout(`${API_BASE}/api/feeds`, 10000);
   if (!resp.ok) throw new Error(`API error: ${resp.status}`);
   return resp.json();
 }
