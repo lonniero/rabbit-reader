@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rabbit-reader-v10'; // fix rss backend url
+const CACHE_NAME = 'rabbit-reader-v11'; // add web link button
 const ASSETS = [
   './',
   './index.html',
